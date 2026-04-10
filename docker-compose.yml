@@ -48,7 +48,7 @@ services:
       - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterKey}
       - SEFARIA_DATA_DIR=/data/sefaria
     volumes:
-      - sefaria_data:/data/sefaria
+      - ./sefaria-data:/data/sefaria
     expose:
       - "3002"
     depends_on:
@@ -91,4 +91,3 @@ volumes:
   caddy_config:
   postgres_data:
   meili_data:
-  sefaria_data:
