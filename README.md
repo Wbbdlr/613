@@ -29,6 +29,7 @@ docker compose up -d
 
 The stack publishes the proxy on **http://SERVER_IP:8613** by default, or whatever `HTTP_PORT` you set in `.env`. You can expose that port directly or point Cloudflared, Caddy, Nginx Proxy Manager, or another reverse proxy at it.
 By default it pulls the `stable` image channel; set `IMAGE_TAG` in `.env` if you want to pin a different published tag such as a versioned release tag.
+The compose files default the project name to `613-home`, but Dockge may still show container and volume names based on the stack name you choose in its UI.
 
 ### Optional: Repo-Build Deployment
 
