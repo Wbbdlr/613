@@ -17,7 +17,7 @@ A fully self-hosted Docker Compose stack providing:
 git clone https://github.com/Wbbdlr/613.git
 cd 613
 cp .env.example .env
-# Edit .env to set your MEILI_MASTER_KEY and location defaults
+# Optional for first boot, but recommended in production so you replace default secrets
 ```
 
 ### 2. Start the stack
@@ -27,15 +27,17 @@ docker compose pull
 docker compose up -d
 ```
 
-The UI will be available at **http://localhost** (or whatever `HTTP_PORT` you set).
+The stack publishes the proxy on **http://SERVER_IP:8613** by default, or whatever `HTTP_PORT` you set in `.env`. You can expose that port directly or point Cloudflared, Caddy, Nginx Proxy Manager, or another reverse proxy at it.
+By default it pulls the `stable` image channel; set `IMAGE_TAG` in `.env` if you want to pin a different published tag such as a versioned release tag.
 
 ### Using with Dockge
 
-[Dockge](https://github.com/louislam/dockge) can deploy directly from the compose YAML because production services use prebuilt images from GHCR.
+[Dockge](https://github.com/louislam/dockge) can deploy this stack directly from a single pasted compose file. The production stack no longer depends on external config files; it writes the Caddy config and Postgres init SQL inside the containers at startup.
 
-1. In Dockge, create/import a stack with this repo's `docker-compose.yml` content.
-2. Add an `.env` for the stack (copy values from `.env.example`).
-3. Click **Deploy**.
+1. In Dockge, paste [docker-compose.yml](/workspaces/613/docker-compose.yml) as the stack definition.
+2. Add an `.env` only if you want to override defaults, especially `MEILI_MASTER_KEY`, `JWT_SECRET`, or `IMAGE_TAG`.
+3. Point your external tunnel or reverse proxy at the published host port, default `8613`.
+4. Click **Deploy**.
 
 > **Optional local-source builds:** if you want to build from source, clone the full repo and run `docker compose up --build` from that repo root (the override file is auto-applied there).
 
@@ -53,7 +55,7 @@ This downloads the [Sefaria-Export](https://github.com/Sefaria-Project/Sefaria-E
 
 | Service | Internal Port | Description |
 |---|---|---|
-| `proxy` | 80 / 443 | Caddy reverse proxy (entry point) |
+| `proxy` | 8613 | Caddy reverse proxy (internal entry point) |
 | `frontend` | 3000 | React UI |
 | `hebcal-service` | 3001 | Hebcal REST API + PDF export |
 | `sefaria-service` | 3002 | Sefaria text API + notes |
@@ -103,7 +105,8 @@ docker compose up --build
 
 Source code is bind-mounted in dev mode via `docker-compose.override.yml`.
 For local development, the override switches the frontend target to `dev` (hot reload).
-Production-style deployments, including Dockge config-only stacks, use prebuilt GHCR images by default.
+Production-style deployments, including Dockge repo-backed stacks, use prebuilt GHCR images by default.
+Production-style deployments from a single Dockge compose file also work because required config is generated at container startup.
 
 ## License & Data
 

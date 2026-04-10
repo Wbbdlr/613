@@ -1,10 +1,6 @@
 # Development overrides – build locally with bind-mount source for hot reload
 services:
   proxy:
-    ports:
-      - "${HTTP_PORT:-8613}:8613"
-    # Override inline config with local file for easy Caddyfile editing during dev
-    configs: []
     volumes:
       - caddy_data:/data
       - caddy_config:/config
@@ -19,8 +15,8 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
 
   hebcal-service:
     build:
@@ -30,8 +26,8 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
     command: ["node", "--watch", "src/index.js"]
 
   sefaria-service:
@@ -44,16 +40,16 @@ services:
     environment:
       - NODE_ENV=development
       - JWT_SECRET=${JWT_SECRET:-dev-secret}
-    ports:
-      - "3002:3002"
+    expose:
+      - "3002"
     command: ["node", "--watch", "src/index.js"]
 
   db:
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
 
   meilisearch:
     environment:
       - MEILI_ENV=development
-    ports:
-      - "7700:7700"
+    expose:
+      - "7700"

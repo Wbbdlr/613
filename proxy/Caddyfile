@@ -3,27 +3,32 @@
 }
 
 :8613 {
-    # Trust Cloudflare / reverse-proxy headers when exposed via tunnel
-    header_up X-Forwarded-Proto {scheme}
-    header_up X-Real-IP {remote_host}
-
     # Service Worker must not be cached so browsers always get the latest version
     header /sw.js Cache-Control "no-cache, no-store, must-revalidate"
 
     # Hebcal API
     handle /api/hebcal/* {
         uri strip_prefix /api/hebcal
-        reverse_proxy hebcal-service:3001
+        reverse_proxy hebcal-service:3001 {
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Real-IP {remote_host}
+        }
     }
 
     # Sefaria API
     handle /api/sefaria/* {
         uri strip_prefix /api/sefaria
-        reverse_proxy sefaria-service:3002
+        reverse_proxy sefaria-service:3002 {
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Real-IP {remote_host}
+        }
     }
 
     # Frontend (React SPA — must be last / catch-all)
     handle {
-        reverse_proxy frontend:3000
+        reverse_proxy frontend:3000 {
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Real-IP {remote_host}
+        }
     }
 }
