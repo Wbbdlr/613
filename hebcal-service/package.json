@@ -9,10 +9,8 @@
     "dev": "node --watch src/index.js"
   },
   "dependencies": {
-    "@hebcal/core": "^5.8.0",
-    "@hebcal/geo-sqlite": "^4.3.0",
-    "@hebcal/noaa": "^3.3.0",
-    "@hebcal/learning": "^2.4.0",
+    "@hebcal/core": "^6.1.0",
+    "@hebcal/learning": "^6.8.0",
     "express": "^4.19.2",
     "cors": "^2.8.5",
     "pdfkit": "^0.15.0"

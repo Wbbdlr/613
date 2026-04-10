@@ -3,8 +3,12 @@ import styles from './SefariaPage.module.css';
 
 const API = '/api/sefaria';
 
+function Spinner() {
+  return <span className={styles.spinner} aria-label="Loading" />;
+}
+
 export default function SefariaPage() {
-  const [view, setView] = useState('search'); // 'search' | 'browse' | 'read'
+  const [view, setView] = useState('search');
   const [currentRef, setCurrentRef] = useState(null);
 
   const openRef = useCallback((ref) => {
@@ -14,17 +18,30 @@ export default function SefariaPage() {
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>📖 Sefaria Reader</h1>
-      <div className={styles.tabs}>
-        <button className={view === 'search' ? styles.tabActive : styles.tab} onClick={() => setView('search')}>🔍 Search</button>
-        <button className={view === 'browse' ? styles.tabActive : styles.tab} onClick={() => setView('browse')}>📚 Browse</button>
+      <h1 className={styles.title}>Sefaria Reader</h1>
+      <div className={styles.tabs} role="tablist">
+        <button
+          role="tab" aria-selected={view === 'search'}
+          className={view === 'search' ? styles.tabActive : styles.tab}
+          onClick={() => setView('search')}
+        >🔍 Search</button>
+        <button
+          role="tab" aria-selected={view === 'browse'}
+          className={view === 'browse' ? styles.tabActive : styles.tab}
+          onClick={() => setView('browse')}
+        >📚 Browse</button>
         {currentRef && (
-          <button className={view === 'read' ? styles.tabActive : styles.tab} onClick={() => setView('read')}>
-            📄 {currentRef}
+          <button
+            role="tab" aria-selected={view === 'read'}
+            className={view === 'read' ? styles.tabActive : styles.tab}
+            onClick={() => setView('read')}
+            title={currentRef}
+          >
+            📄 <span className={styles.refLabel}>{currentRef}</span>
           </button>
         )}
       </div>
-      <div className={styles.panel}>
+      <div className={styles.panel} role="tabpanel">
         {view === 'search' && <SearchPanel onOpen={openRef} />}
         {view === 'browse' && <BrowsePanel onOpen={openRef} />}
         {view === 'read' && currentRef && <ReadPanel ref_={currentRef} />}
@@ -43,10 +60,10 @@ function SearchPanel({ onOpen }) {
     e.preventDefault();
     if (!q.trim()) return;
     setLoading(true);
-    const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`);
-    const d = await r.json();
-    setResults(d);
-    setLoading(false);
+    try {
+      const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`);
+      setResults(await r.json());
+    } finally { setLoading(false); }
   };
 
   return (
@@ -57,16 +74,28 @@ function SearchPanel({ onOpen }) {
           value={q}
           onChange={e => setQ(e.target.value)}
           placeholder="Search texts… (requires indexed data)"
+          autoFocus
         />
-        <button type="submit" disabled={loading}>{loading ? '…' : 'Search'}</button>
+        <button type="submit" className={styles.btn} disabled={loading}>
+          {loading ? <Spinner /> : 'Search'}
+        </button>
       </form>
       {results && (
         <div>
-          <p className={styles.resultCount}>{results.total ?? 0} results for "{results.query}"</p>
+          <p className={styles.resultCount}>{results.total ?? 0} result{results.total !== 1 ? 's' : ''} for "{results.query}"</p>
+          {(results.hits?.length === 0) && (
+            <div className={styles.emptyState}>
+              <span className={styles.emptyIcon}>📭</span>
+              <p>No results found. Make sure you've run <code>seed-sefaria.sh</code> to import text data.</p>
+            </div>
+          )}
           {results.hits?.map((hit, i) => (
             <div key={i} className={styles.hit} onClick={() => onOpen(hit.ref)}>
-              <strong>{hit.ref}</strong>
-              <p dangerouslySetInnerHTML={{ __html: hit._formatted?.text || hit.text || '' }} />
+              <div className={styles.hitRef}>{hit.ref}</div>
+              <p
+                className={styles.hitSnippet}
+                dangerouslySetInnerHTML={{ __html: hit._formatted?.text || hit.text || '' }}
+              />
             </div>
           ))}
         </div>
@@ -80,13 +109,18 @@ function BrowsePanel({ onOpen }) {
   const [books, setBooks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
   const [bookMeta, setBookMeta] = useState(null);
+  const [booksLoading, setBooksLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API}/texts/books`).then(r => r.json()).then(d => setBooks(d.books || []));
+    fetch(`${API}/texts/books`)
+      .then(r => r.json())
+      .then(d => setBooks(d.books || []))
+      .finally(() => setBooksLoading(false));
   }, []);
 
   const selectBook = async (book) => {
     setSelectedBook(book);
+    setBookMeta(null);
     const r = await fetch(`${API}/texts/${encodeURIComponent(book)}`);
     setBookMeta(await r.json());
   };
@@ -94,8 +128,14 @@ function BrowsePanel({ onOpen }) {
   return (
     <div className={styles.browseLayout}>
       <div className={styles.bookList}>
-        <h3>Books</h3>
-        {books.length === 0 && <p className={styles.hint}>No books found. Run seed-sefaria.sh to import data.</p>}
+        <div className={styles.bookListHeader}>Books</div>
+        {booksLoading && <div className={styles.loadingRow}><Spinner /></div>}
+        {!booksLoading && books.length === 0 && (
+          <div className={styles.emptyState}>
+            <span className={styles.emptyIcon}>📂</span>
+            <p>No books found.<br />Run <code>seed-sefaria.sh</code> to import data.</p>
+          </div>
+        )}
         {books.map(b => (
           <div
             key={b}
@@ -104,11 +144,20 @@ function BrowsePanel({ onOpen }) {
           >{b}</div>
         ))}
       </div>
-      <div className={styles.chapterList}>
+      <div className={styles.chapterArea}>
+        {!bookMeta && !selectedBook && (
+          <div className={styles.emptyState}>
+            <span className={styles.emptyIcon}>👈</span>
+            <p>Select a book to begin</p>
+          </div>
+        )}
+        {selectedBook && !bookMeta && <div className={styles.loadingRow}><Spinner /></div>}
         {bookMeta && (
           <>
-            <h3>{selectedBook}</h3>
-            <p>{bookMeta.chapters} chapters</p>
+            <div className={styles.chapterHeader}>
+              <span className={styles.chapterBookName}>{selectedBook}</span>
+              <span className={styles.chapterCount}>{bookMeta.chapters} chapters</span>
+            </div>
             <div className={styles.chapterGrid}>
               {Array.from({ length: bookMeta.chapters }, (_, i) => (
                 <button
@@ -120,7 +169,6 @@ function BrowsePanel({ onOpen }) {
             </div>
           </>
         )}
-        {!bookMeta && <p className={styles.hint}>Select a book →</p>}
       </div>
     </div>
   );
@@ -132,16 +180,20 @@ function ReadPanel({ ref_ }) {
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState('');
   const [selectedVerse, setSelectedVerse] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Parse "Book Chapter" → book + chapter
   const parts = ref_.match(/^(.+)\s+(\d+)$/);
   const book = parts?.[1];
   const chapter = parts?.[2];
 
   useEffect(() => {
     if (!book || !chapter) return;
+    setLoading(true);
+    setData(null);
     fetch(`${API}/texts/${encodeURIComponent(book)}/${chapter}`)
-      .then(r => r.json()).then(setData);
+      .then(r => r.json())
+      .then(setData)
+      .finally(() => setLoading(false));
   }, [ref_, book, chapter]);
 
   const loadNotes = useCallback(() => {
@@ -169,13 +221,21 @@ function ReadPanel({ ref_ }) {
   };
 
   if (!parts) return <p className={styles.error}>Invalid reference: {ref_}</p>;
-  if (!data) return <p>Loading {ref_}…</p>;
+  if (loading) return (
+    <div className={styles.loadingRow} style={{padding:'3rem'}}>
+      <Spinner /><span style={{marginLeft:'0.5rem',color:'#777'}}>Loading {ref_}…</span>
+    </div>
+  );
+  if (!data) return null;
   if (data.error) return <p className={styles.error}>{data.error}</p>;
 
   return (
     <div className={styles.readLayout}>
       <div className={styles.textArea}>
-        <h2>{data.ref}</h2>
+        <div className={styles.textHeader}>
+          <h2 className={styles.textTitle}>{data.ref}</h2>
+          <span className={styles.chapterBadge}>Chapter {chapter}</span>
+        </div>
         {data.en.map((verse, i) => {
           const verseRef = `${book} ${chapter}:${i + 1}`;
           return (
@@ -183,40 +243,53 @@ function ReadPanel({ ref_ }) {
               key={i}
               className={`${styles.verse} ${selectedVerse === verseRef ? styles.verseSelected : ''}`}
               onClick={() => setSelectedVerse(verseRef)}
+              title="Click to add a note"
             >
               <span className={styles.verseNum}>{i + 1}</span>
-              <div>
+              <div className={styles.verseContent}>
                 <div className={styles.enText}>{verse}</div>
-                {data.he[i] && <div className={styles.heText} dir="rtl">{data.he[i]}</div>}
+                {data.he[i] && <div className={styles.heTextVerse} dir="rtl">{data.he[i]}</div>}
               </div>
             </div>
           );
         })}
       </div>
-      <div className={styles.notesPanel}>
-        <h3>Notes</h3>
+      <aside className={styles.notesPanel}>
+        <div className={styles.notesPanelHeader}>
+          <span>📝</span> Notes
+        </div>
         {selectedVerse ? (
           <>
-            <p className={styles.noteRef}>{selectedVerse}</p>
-            {notes.map(n => (
-              <div key={n.id} className={styles.noteItem}>
-                <p>{n.text}</p>
-                <button onClick={() => deleteNote(n.id)}>✕</button>
-              </div>
-            ))}
+            <div className={styles.noteRef}>{selectedVerse}</div>
+            <div className={styles.notesList}>
+              {notes.length === 0 && <p className={styles.hint}>No notes yet for this verse.</p>}
+              {notes.map(n => (
+                <div key={n.id} className={styles.noteItem}>
+                  <p>{n.text}</p>
+                  <button className={styles.noteDelete} onClick={() => deleteNote(n.id)} title="Delete note">✕</button>
+                </div>
+              ))}
+            </div>
             <textarea
               className={styles.noteInput}
               value={newNote}
               onChange={e => setNewNote(e.target.value)}
               placeholder="Add a note…"
               rows={3}
+              onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) saveNote(); }}
             />
-            <button className={styles.saveBtn} onClick={saveNote}>Save Note</button>
+            <button className={styles.saveBtn} onClick={saveNote} disabled={!newNote.trim()}>
+              Save Note
+            </button>
           </>
         ) : (
-          <p className={styles.hint}>Click a verse to add notes</p>
+          <div className={styles.emptyState}>
+            <span className={styles.emptyIcon}>✏️</span>
+            <p>Click any verse to annotate it</p>
+          </div>
         )}
-      </div>
+      </aside>
     </div>
   );
 }
+

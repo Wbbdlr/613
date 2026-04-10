@@ -3,9 +3,8 @@ import {
   HDate,
   HebrewCalendar,
   flags,
-  greg,
 } from '@hebcal/core';
-import { DafYomi, NachYomi } from '@hebcal/learning';
+import '@hebcal/learning'; // register DafYomi / NachYomi daily-learning handlers
 
 export const router = Router();
 
@@ -93,13 +92,16 @@ router.get('/holidays', (req, res) => {
 router.get('/dafyomi', (req, res) => {
   const dateStr = req.query.date || new Date().toISOString().slice(0, 10);
   const hdate = new HDate(new Date(dateStr));
-  const daf = new DafYomi(hdate);
+  const events = HebrewCalendar.calendar({
+    start: hdate, end: hdate, dailyLearning: { dafYomi: true },
+  });
+  const ev = events[0] || null;
   res.json({
     date: dateStr,
-    tractate: daf.name,
-    daf: daf.blatt,
-    display: daf.render('en'),
-    displayHe: daf.render('he'),
+    tractate: ev?.daf?.name ?? null,
+    daf: ev?.daf?.blatt ?? null,
+    display: ev ? ev.render('en') : null,
+    displayHe: ev ? ev.render('he') : null,
   });
 });
 
@@ -107,10 +109,13 @@ router.get('/dafyomi', (req, res) => {
 router.get('/nach', (req, res) => {
   const dateStr = req.query.date || new Date().toISOString().slice(0, 10);
   const hdate = new HDate(new Date(dateStr));
-  const nach = new NachYomi(hdate);
+  const events = HebrewCalendar.calendar({
+    start: hdate, end: hdate, dailyLearning: { nachYomi: true },
+  });
+  const ev = events[0] || null;
   res.json({
     date: dateStr,
-    display: nach.render('en'),
-    displayHe: nach.render('he'),
+    display: ev ? ev.render('en') : null,
+    displayHe: ev ? ev.render('he') : null,
   });
 });
