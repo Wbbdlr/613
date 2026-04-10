@@ -11,14 +11,14 @@ A fully self-hosted Docker Compose stack providing:
 - [Docker](https://docs.docker.com/get-docker/) + [Docker Compose](https://docs.docker.com/compose/) (v2)
 - ~4 GB free disk space (after Sefaria data import)
 
-### 1. Clone & configure
+### 1. Clone
 
 ```bash
 git clone https://github.com/Wbbdlr/613.git
 cd 613
-cp .env.example .env
-# Optional for first boot, but recommended in production so you replace default secrets
 ```
+
+No `.env` file is required. All essential defaults are inline in the compose files. If you want to override settings like `HTTP_PORT`, `IMAGE_TAG`, or `JWT_SECRET`, copy [.env.example](/workspaces/613/.env.example) to `.env` and edit it.
 
 ### 2. Start the stack
 
@@ -30,7 +30,7 @@ docker compose up -d
 The stack publishes the app on **http://SERVER_IP:8613** by default, or whatever `HTTP_PORT` you set in `.env`. You can expose that port directly or point Cloudflared, Caddy, Nginx Proxy Manager, or another reverse proxy at it.
 By default it pulls the `stable` image channel; set `IMAGE_TAG` in `.env` if you want to pin a different published tag such as a versioned release tag.
 The compose files default the project name to `613-home`, but Dockge may still show container and volume names based on the stack name you choose in its UI.
-The production deployment now runs as three containers total: `app`, `db`, and `meilisearch`.
+The production deployment now runs as a single `app` container with one persistent data volume.
 
 ### Optional: Repo-Build Deployment
 
@@ -56,10 +56,10 @@ Set `GIT_REF` if you want to pin a tag or branch, for example `GIT_REF=v1.0.1`. 
 
 [Dockge](https://github.com/louislam/dockge) can deploy this stack directly from a single pasted compose file.
 
-For public Dockge deployments, the GHCR packages must be publicly readable. After the first publish, set each package to **Public** in GitHub Packages if they are not already public: `613-app` and `613-db`.
+For public Dockge deployments, the GHCR package must be publicly readable. After the first publish, set `613-app` to **Public** in GitHub Packages if it is not already public.
 
 1. In Dockge, paste [docker-compose.yml](/workspaces/613/docker-compose.yml) as the stack definition.
-2. Add an `.env` only if you want to override defaults, especially `MEILI_MASTER_KEY`, `JWT_SECRET`, or `IMAGE_TAG`.
+2. Add an `.env` only if you want to override defaults, especially `JWT_SECRET`, `HTTP_PORT`, or `IMAGE_TAG`.
 3. Point your external tunnel or reverse proxy at the published host port, default `8613`.
 4. Click **Deploy**.
 
@@ -76,15 +76,14 @@ chmod +x scripts/seed-sefaria.sh
 ./scripts/seed-sefaria.sh
 ```
 
-This downloads the [Sefaria-Export](https://github.com/Sefaria-Project/Sefaria-Export) dataset and triggers indexing into MeiliSearch. Indexing runs in the background and may take 10–30 minutes depending on your hardware.
+This downloads the [Sefaria-Export](https://github.com/Sefaria-Project/Sefaria-Export) dataset into the app volume and triggers local SQLite search indexing. Indexing runs in the background and may take 10–30 minutes depending on your hardware.
 
 ## Services
 
 | Service | Internal Port | Description |
 |---|---|---|
 | `app` | 8613 | Unified frontend + API server |
-| `db` | 5432 | PostgreSQL (notes, highlights, bookmarks) |
-| `meilisearch` | 7700 | Full-text search engine |
+| `app_data` volume | n/a | SQLite database, imported Sefaria texts, and search index |
 
 ## API Reference
 
@@ -123,14 +122,14 @@ This downloads the [Sefaria-Export](https://github.com/Sefaria-Project/Sefaria-E
 ## Development
 
 ```bash
-# Run in dev mode (hot reload, ports exposed)
+# Run in dev mode from local source
 docker compose up --build
 ```
 
 Source code is bind-mounted in dev mode via `docker-compose.override.yml`.
-For local development, the override builds the unified app image from local source.
+For local development, the override builds the unified app image from local source and keeps the app data in a Docker volume.
 Production-style deployments, including Dockge repo-backed stacks, use either the unified `613-app` image or local repo builds.
-Production-style deployments from a single Dockge compose file work by pulling the published `613-app` and `613-db` images.
+Production-style deployments from a single Dockge compose file work by pulling the published `613-app` image.
 
 ## License & Data
 
@@ -146,7 +145,5 @@ Browser
        ├── /              → built frontend assets
        ├── /api/hebcal/*  → Hebcal routes
        └── /api/sefaria/* → Sefaria routes
-                                ├── PostgreSQL (notes/highlights)
-                                └── MeiliSearch (full-text search)
+                                └── SQLite data + text search in /data
 ```
-613 Home

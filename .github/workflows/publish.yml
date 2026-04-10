@@ -20,10 +20,6 @@ jobs:
             context: .
             dockerfile: ./app/Dockerfile
             target: ""
-          - service: db
-            context: ./db
-            dockerfile: ./db/Dockerfile
-            target: ""
 
     steps:
       - uses: actions/checkout@v4

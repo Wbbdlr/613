@@ -6,21 +6,14 @@ services:
       dockerfile: app/Dockerfile
     environment:
       - NODE_ENV=development
+      - APP_DATA_DIR=/data
+      - SEFARIA_DATA_DIR=/data/sefaria
       - JWT_SECRET=${JWT_SECRET:-dev-secret}
     volumes:
       - ./app/src:/app/src
       - ./hebcal-service/src:/app/hebcal-service/src
-      - ./sefaria-service/src:/app/sefaria-service/src
       - ./sefaria-data:/data/sefaria
+      - app_dev_data:/data
 
-  db:
-    build:
-      context: ./db
-    expose:
-      - "5432"
-
-  meilisearch:
-    environment:
-      - MEILI_ENV=development
-    expose:
-      - "7700"
+volumes:
+  app_dev_data:

@@ -30,17 +30,6 @@ jobs:
           cache-from: type=gha,scope=app
           cache-to: type=gha,mode=max,scope=app
 
-      - name: Build db image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./db
-          file: ./db/Dockerfile
-          push: false
-          load: true
-          tags: 613-db:ci
-          cache-from: type=gha,scope=db
-          cache-to: type=gha,mode=max,scope=db
-
   # ── Unit / Testcontainers tests ────────────────────────────────────────────
   unit-test:
     name: Unit & integration tests
@@ -92,15 +81,6 @@ jobs:
           push: false
           load: true
           tags: ghcr.io/wbbdlr/613-app:stable
-
-      - name: Build db image for production compose
-        uses: docker/build-push-action@v6
-        with:
-          context: ./db
-          file: ./db/Dockerfile
-          push: false
-          load: true
-          tags: ghcr.io/wbbdlr/613-db:stable
 
       - name: Copy env file
         run: cp .env.example .env

@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import hebcalApp from '../hebcal-service/src/app.js';
-import sefariaApp from '../sefaria-service/src/app.js';
+import sefariaApp from './sefaria/app.js';
 
 const app = express();
 

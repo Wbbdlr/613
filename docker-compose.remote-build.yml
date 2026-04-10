@@ -33,53 +33,14 @@ services:
                       environment:
                         - NODE_ENV=production
                         - PORT=8613
-                        - DATABASE_URL=postgresql://sefaria:sefaria@db:5432/sefaria
-                        - MEILI_HOST=http://meilisearch:7700
-                        - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterKey}
+                        - APP_DATA_DIR=/data
                         - SEFARIA_DATA_DIR=/data/sefaria
                         - JWT_SECRET=${JWT_SECRET:-change_me_jwt_secret_in_production}
                       volumes:
-                        - sefaria_data:/data/sefaria
-                      depends_on:
-                        db:
-                          condition: service_healthy
-                        meilisearch:
-                          condition: service_started
-
-                    db:
-                      build:
-                        context: https://github.com/Wbbdlr/613.git#${GIT_REF:-main}:db
-                      restart: unless-stopped
-                      environment:
-                        - POSTGRES_USER=sefaria
-                        - POSTGRES_PASSWORD=sefaria
-                        - POSTGRES_DB=sefaria
-                      volumes:
-                        - postgres_data:/var/lib/postgresql/data
-                      expose:
-                        - "5432"
-                      healthcheck:
-                        test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
-                        interval: 10s
-                        timeout: 5s
-                        retries: 12
-                        start_period: 30s
-
-                    meilisearch:
-                      image: getmeili/meilisearch:v1.7
-                      restart: unless-stopped
-                      environment:
-                        - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterKey}
-                        - MEILI_ENV=production
-                      volumes:
-                        - meili_data:/meili_data
-                      expose:
-                        - "7700"
+                        - app_data:/data
 
                   volumes:
-                    postgres_data:
-                    meili_data:
-                    sefaria_data:
+                    app_data:
       CREATE INDEX IF NOT EXISTS bookmarks_user_idx  ON bookmarks(user_id);
       CREATE INDEX IF NOT EXISTS history_user_idx    ON reading_history(user_id);
       EOF
