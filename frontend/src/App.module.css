@@ -2,6 +2,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: var(--color-bg-page);
 }
 
 /* ── Header ── */
@@ -23,6 +24,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
 }
 
 .logoLink {
@@ -32,6 +34,7 @@
   text-decoration: none;
   color: inherit;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .logoIcon {
@@ -60,6 +63,8 @@
 .nav {
   display: flex;
   gap: 0.25rem;
+  flex: 1;
+  justify-content: center;
 }
 
 .navLink {
@@ -89,6 +94,44 @@
 }
 
 .navIcon { line-height: 1; }
+
+/* ── Header right side ── */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.userMenu {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.username {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.7);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logoutBtn {
+  height: 28px;
+  padding: 0 0.65rem;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 5px;
+  color: rgba(255,255,255,0.75);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.logoutBtn:hover { background: rgba(255,255,255,0.18); color: white; }
 
 /* ── Main ── */
 .main {
@@ -120,9 +163,11 @@
   letter-spacing: 0.02em;
 }
 
-@media (max-width: 600px) {
-  .header { padding: 0 1rem; }
+@media (max-width: 700px) {
+  .header { padding: 0 0.75rem; }
   .logoSub { display: none; }
   .navLink { padding: 0.4rem 0.65rem; font-size: 0.85rem; }
   .main { padding: 1rem; }
+  .username { display: none; }
 }
+

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, NavLink } from 'react-router-dom';
 import HebcalPage from './pages/HebcalPage.jsx';
 import SefariaPage from './pages/SefariaPage.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import DisplaySettings from './components/DisplaySettings.jsx';
+import { useAuth } from './contexts/AuthContext.jsx';
 import styles from './App.module.css';
 
 function useOnlineStatus() {
@@ -18,6 +21,12 @@ function useOnlineStatus() {
 
 export default function App() {
   const isOnline = useOnlineStatus();
+  const { user, login, logout } = useAuth();
+
+  if (!user) {
+    return <LoginPage onLogin={login} />;
+  }
+
   return (
     <div className={styles.shell}>
       {!isOnline && (
@@ -40,6 +49,17 @@ export default function App() {
               <span className={styles.navIcon}>📖</span> Seforim
             </NavLink>
           </nav>
+          <div className={styles.headerActions}>
+            <DisplaySettings />
+            <div className={styles.userMenu}>
+              <span className={styles.username} title={`Signed in as ${user.username}`}>
+                👤 {user.username}
+              </span>
+              <button className={styles.logoutBtn} onClick={logout} title="Sign out">
+                Sign out
+              </button>
+            </div>
+          </div>
         </div>
       </header>
       <main className={styles.main}>

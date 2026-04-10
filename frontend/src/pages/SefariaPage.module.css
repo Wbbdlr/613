@@ -4,7 +4,7 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 1.25rem;
-  color: #0f2744;
+  color: var(--color-title);
 }
 
 /* ── Tabs ── */
@@ -13,7 +13,7 @@
   gap: 0.3rem;
   flex-wrap: wrap;
   margin-bottom: 0;
-  border-bottom: 2px solid #ddd;
+  border-bottom: 2px solid var(--color-border);
 }
 
 .tab, .tabActive {
@@ -21,25 +21,25 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.55rem 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-bottom: none;
-  background: #f8f5ef;
+  background: var(--color-bg-surface-alt);
   border-radius: 6px 6px 0 0;
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #555;
+  color: var(--color-text-secondary);
   transition: background 0.15s;
   font-family: inherit;
   max-width: 220px;
   overflow: hidden;
 }
 
-.tab:hover { background: #ede8df; color: #1a3a5c; }
+.tab:hover { background: var(--color-bg-hover); color: var(--color-brand); }
 
 .tabActive {
-  background: white;
-  color: #0f2744;
+  background: var(--color-bg-surface);
+  color: var(--color-title);
   font-weight: 600;
   position: relative;
 }
@@ -49,7 +49,7 @@
   bottom: -2px;
   left: 0; right: 0;
   height: 2px;
-  background: white;
+  background: var(--color-bg-surface);
 }
 
 .refLabel {
@@ -61,11 +61,11 @@
 
 /* ── Panel ── */
 .panel {
-  background: white;
+  background: var(--color-bg-surface);
   border-radius: 0 8px 8px 8px;
   padding: 1.75rem;
   box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-top: none;
   min-height: 400px;
 }
@@ -89,14 +89,14 @@
 }
 
 .searchInput:focus {
-  border-color: #1a3a5c;
+  border-color: var(--color-brand);
   box-shadow: 0 0 0 3px rgba(26,58,92,0.12);
 }
 
 .btn {
   height: 38px;
   padding: 0 1.1rem;
-  background: #1a3a5c;
+  background: var(--color-brand);
   color: white;
   border: none;
   border-radius: 6px;
@@ -109,11 +109,11 @@
   gap: 0.35rem;
   transition: background 0.15s;
 }
-.btn:hover:not(:disabled) { background: #254e7d; }
+.btn:hover:not(:disabled) { background: var(--color-brand-hover); }
 .btn:disabled { opacity: 0.55; cursor: default; }
 
 .resultCount {
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 0.82rem;
   margin-bottom: 0.75rem;
   font-style: italic;
@@ -121,31 +121,31 @@
 
 .hit {
   padding: 0.85rem 1rem;
-  border: 1px solid #ede8df;
+  border: 1px solid var(--color-border-warm);
   border-radius: 8px;
   margin-bottom: 0.5rem;
   cursor: pointer;
   transition: background 0.12s, border-color 0.12s;
-  background: #fdfbf8;
+  background: var(--color-bg-surface-alt);
 }
-.hit:hover { background: #f4f1eb; border-color: #d4cfc7; }
+.hit:hover { background: var(--color-bg-hover); border-color: #d4cfc7; }
 
 .hitRef {
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: #1a3a5c;
+  color: var(--color-brand);
   margin-bottom: 0.3rem;
 }
 
 .hitSnippet {
   font-size: 0.875rem;
-  color: #444;
+  color: var(--color-text-primary);
   line-height: 1.55;
 }
 
 .hitSnippet :global(mark) {
-  background: #fff3a0;
+  background: var(--color-mark-bg);
   border-radius: 2px;
   padding: 0 1px;
 }
@@ -159,7 +159,7 @@
 }
 
 .bookList {
-  border-right: 1px solid #ede8df;
+  border-right: 1px solid var(--color-border-warm);
   padding-right: 1rem;
   overflow-y: auto;
   max-height: 65vh;
@@ -170,10 +170,10 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #888;
+  color: var(--color-text-muted);
   margin-bottom: 0.5rem;
   padding-bottom: 0.4rem;
-  border-bottom: 1px solid #ede8df;
+  border-bottom: 1px solid var(--color-border-warm);
 }
 
 .bookItem, .bookItemActive {
@@ -187,8 +187,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.bookItem:hover { background: #f4f1eb; }
-.bookItemActive { background: #1a3a5c; color: white; }
+.bookItem:hover { background: var(--color-bg-hover); }
+.bookItemActive { background: var(--color-brand); color: white; }
 
 .chapterArea { overflow-y: auto; max-height: 65vh; }
 
@@ -202,12 +202,12 @@
 .chapterBookName {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #0f2744;
+  color: var(--color-title);
 }
 
 .chapterCount {
   font-size: 0.8rem;
-  color: #888;
+  color: var(--color-text-muted);
 }
 
 .chapterGrid {
@@ -219,16 +219,16 @@
 .chapterBtn {
   width: 40px; height: 40px;
   border: 1.5px solid #d0ccc4;
-  background: white;
+  background: var(--color-bg-surface);
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.8rem;
   font-family: inherit;
   font-weight: 500;
-  color: #333;
+  color: var(--color-text-primary);
   transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
-.chapterBtn:hover { background: #1a3a5c; border-color: #1a3a5c; color: white; }
+.chapterBtn:hover { background: var(--color-brand); border-color: var(--color-brand); color: white; }
 
 /* ── Read ── */
 .readLayout {
@@ -248,17 +248,17 @@
 .textTitle {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #0f2744;
+  color: var(--color-title);
 }
 
 .chapterBadge {
   font-size: 0.72rem;
   font-weight: 600;
-  background: #f4f1eb;
+  background: var(--color-bg-hover);
   border: 1px solid #d4cfc7;
   border-radius: 20px;
   padding: 0.2rem 0.65rem;
-  color: #666;
+  color: var(--color-text-secondary);
   letter-spacing: 0.04em;
 }
 
@@ -273,10 +273,10 @@
   transition: background 0.1s, border-color 0.1s;
 }
 .verse:hover { background: #faf8f5; }
-.verseSelected { background: #eef4fb !important; border-left-color: #1a3a5c; }
+.verseSelected { background: var(--color-bg-accent) !important; border-left-color: var(--color-brand); }
 
 .verseNum {
-  color: #aaa;
+  color: var(--color-text-faint);
   font-size: 0.75rem;
   font-weight: 600;
   min-width: 1.5rem;
@@ -286,12 +286,12 @@
 }
 
 .verseContent { flex: 1; }
-.enText { font-size: 0.92rem; line-height: 1.7; color: #222; }
+.enText { font-size: 0.92rem; line-height: 1.7; color: var(--color-text-primary); }
 .heTextVerse {
   font-family: 'Frank Ruhl Libre', 'Times New Roman', serif;
   font-size: 1.05rem;
   line-height: 1.85;
-  color: #444;
+  color: var(--color-text-primary);
   margin-top: 0.3rem;
   border-top: 1px solid #f0ece4;
   padding-top: 0.3rem;
@@ -299,7 +299,7 @@
 
 /* ── Notes Panel ── */
 .notesPanel {
-  border: 1px solid #ede8df;
+  border: 1px solid var(--color-border-warm);
   border-radius: 10px;
   overflow: hidden;
   position: sticky;
@@ -310,14 +310,14 @@
 }
 
 .notesPanelHeader {
-  background: #f4f1eb;
-  border-bottom: 1px solid #ede8df;
+  background: var(--color-bg-hover);
+  border-bottom: 1px solid var(--color-border-warm);
   padding: 0.65rem 0.9rem;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #666;
+  color: var(--color-text-secondary);
   display: flex;
   align-items: center;
   gap: 0.35rem;
@@ -326,10 +326,10 @@
 .noteRef {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #1a3a5c;
-  background: #eef4fb;
+  color: var(--color-brand);
+  background: var(--color-bg-accent);
   padding: 0.4rem 0.9rem;
-  border-bottom: 1px solid #dce8f5;
+  border-bottom: 1px solid var(--color-border-accent);
 }
 
 .notesList {
@@ -339,8 +339,8 @@
 }
 
 .noteItem {
-  background: #fffde7;
-  border: 1px solid #f0e68c;
+  background: var(--color-note-bg);
+  border: 1px solid var(--color-note-border);
   border-radius: 6px;
   padding: 0.5rem 0.65rem;
   margin-bottom: 0.4rem;
@@ -367,20 +367,20 @@
 .noteInput {
   width: 100%;
   border: none;
-  border-top: 1px solid #ede8df;
+  border-top: 1px solid var(--color-border-warm);
   padding: 0.5rem 0.9rem;
   font-size: 0.875rem;
   font-family: inherit;
   resize: none;
   outline: none;
-  background: #fdfbf8;
+  background: var(--color-bg-surface-alt);
 }
-.noteInput:focus { background: white; }
+.noteInput:focus { background: var(--color-bg-surface); }
 
 .saveBtn {
   width: 100%;
   padding: 0.5rem;
-  background: #1a3a5c;
+  background: var(--color-brand);
   color: white;
   border: none;
   cursor: pointer;
@@ -389,7 +389,7 @@
   font-weight: 500;
   transition: background 0.15s;
 }
-.saveBtn:hover:not(:disabled) { background: #254e7d; }
+.saveBtn:hover:not(:disabled) { background: var(--color-brand-hover); }
 .saveBtn:disabled { opacity: 0.5; cursor: default; }
 
 /* ── Shared ── */
@@ -408,7 +408,7 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  color: #888;
+  color: var(--color-text-muted);
 }
 
 .emptyState {
@@ -418,20 +418,20 @@
   gap: 0.5rem;
   padding: 2.5rem 1rem;
   text-align: center;
-  color: #888;
+  color: var(--color-text-muted);
   font-size: 0.875rem;
 }
 .emptyIcon { font-size: 2rem; line-height: 1; }
 .emptyState code {
-  background: #f4f1eb;
+  background: var(--color-bg-hover);
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
   font-size: 0.8rem;
-  color: #555;
+  color: var(--color-text-secondary);
 }
 
 .hint {
-  color: #aaa;
+  color: var(--color-text-faint);
   font-size: 0.8rem;
   font-style: italic;
   text-align: center;
@@ -453,6 +453,6 @@
 
 @media (max-width: 600px) {
   .browseLayout { grid-template-columns: 1fr; }
-  .bookList { border-right: none; border-bottom: 1px solid #ede8df; padding-right: 0; padding-bottom: 0.75rem; max-height: 200px; }
+  .bookList { border-right: none; border-bottom: 1px solid var(--color-border-warm); padding-right: 0; padding-bottom: 0.75rem; max-height: 200px; }
   .panel { padding: 1rem; }
 }

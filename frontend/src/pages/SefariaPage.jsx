@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import styles from './SefariaPage.module.css';
 
 const API = '/api/sefaria';
@@ -7,9 +8,21 @@ function Spinner() {
   return <span className={styles.spinner} aria-label="Loading" />;
 }
 
+function useAuthFetch() {
+  const { user, logout } = useAuth();
+  return useCallback(async (url, options = {}) => {
+    const headers = { ...(options.headers || {}) };
+    if (user?.token) headers['Authorization'] = `Bearer ${user.token}`;
+    const res = await fetch(url, { ...options, headers });
+    if (res.status === 401) { logout(); throw new Error('Session expired'); }
+    return res;
+  }, [user, logout]);
+}
+
 export default function SefariaPage() {
   const [view, setView] = useState('search');
   const [currentRef, setCurrentRef] = useState(null);
+  const authFetch = useAuthFetch();
 
   const openRef = useCallback((ref) => {
     setCurrentRef(ref);
@@ -42,16 +55,16 @@ export default function SefariaPage() {
         )}
       </div>
       <div className={styles.panel} role="tabpanel">
-        {view === 'search' && <SearchPanel onOpen={openRef} />}
-        {view === 'browse' && <BrowsePanel onOpen={openRef} />}
-        {view === 'read' && currentRef && <ReadPanel ref_={currentRef} />}
+        {view === 'search' && <SearchPanel onOpen={openRef} authFetch={authFetch} />}
+        {view === 'browse' && <BrowsePanel onOpen={openRef} authFetch={authFetch} />}
+        {view === 'read' && currentRef && <ReadPanel ref_={currentRef} authFetch={authFetch} />}
       </div>
     </div>
   );
 }
 
 /* ---- Search ---- */
-function SearchPanel({ onOpen }) {
+function SearchPanel({ onOpen, authFetch }) {
   const [q, setQ] = useState('');
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -61,7 +74,7 @@ function SearchPanel({ onOpen }) {
     if (!q.trim()) return;
     setLoading(true);
     try {
-      const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`);
+      const r = await authFetch(`${API}/search?q=${encodeURIComponent(q)}`);
       setResults(await r.json());
     } finally { setLoading(false); }
   };
@@ -105,23 +118,23 @@ function SearchPanel({ onOpen }) {
 }
 
 /* ---- Browse ---- */
-function BrowsePanel({ onOpen }) {
+function BrowsePanel({ onOpen, authFetch }) {
   const [books, setBooks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
   const [bookMeta, setBookMeta] = useState(null);
   const [booksLoading, setBooksLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API}/texts/books`)
+    authFetch(`${API}/texts/books`)
       .then(r => r.json())
       .then(d => setBooks(d.books || []))
       .finally(() => setBooksLoading(false));
-  }, []);
+  }, [authFetch]);
 
   const selectBook = async (book) => {
     setSelectedBook(book);
     setBookMeta(null);
-    const r = await fetch(`${API}/texts/${encodeURIComponent(book)}`);
+    const r = await authFetch(`${API}/texts/${encodeURIComponent(book)}`);
     setBookMeta(await r.json());
   };
 
@@ -175,7 +188,7 @@ function BrowsePanel({ onOpen }) {
 }
 
 /* ---- Read ---- */
-function ReadPanel({ ref_ }) {
+function ReadPanel({ ref_, authFetch }) {
   const [data, setData] = useState(null);
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState('');
@@ -190,23 +203,23 @@ function ReadPanel({ ref_ }) {
     if (!book || !chapter) return;
     setLoading(true);
     setData(null);
-    fetch(`${API}/texts/${encodeURIComponent(book)}/${chapter}`)
+    authFetch(`${API}/texts/${encodeURIComponent(book)}/${chapter}`)
       .then(r => r.json())
       .then(setData)
       .finally(() => setLoading(false));
-  }, [ref_, book, chapter]);
+  }, [ref_, book, chapter, authFetch]);
 
   const loadNotes = useCallback(() => {
     if (!selectedVerse) return;
-    fetch(`${API}/notes?ref=${encodeURIComponent(selectedVerse)}`)
+    authFetch(`${API}/notes?ref=${encodeURIComponent(selectedVerse)}`)
       .then(r => r.json()).then(setNotes);
-  }, [selectedVerse]);
+  }, [selectedVerse, authFetch]);
 
   useEffect(() => { loadNotes(); }, [loadNotes]);
 
   const saveNote = async () => {
     if (!newNote.trim() || !selectedVerse) return;
-    await fetch(`${API}/notes`, {
+    await authFetch(`${API}/notes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ref: selectedVerse, text: newNote }),
@@ -216,14 +229,14 @@ function ReadPanel({ ref_ }) {
   };
 
   const deleteNote = async (id) => {
-    await fetch(`${API}/notes/${id}`, { method: 'DELETE' });
+    await authFetch(`${API}/notes/${id}`, { method: 'DELETE' });
     loadNotes();
   };
 
   if (!parts) return <p className={styles.error}>Invalid reference: {ref_}</p>;
   if (loading) return (
     <div className={styles.loadingRow} style={{padding:'3rem'}}>
-      <Spinner /><span style={{marginLeft:'0.5rem',color:'#777'}}>Loading {ref_}…</span>
+      <Spinner /><span style={{marginLeft:'0.5rem',color:'var(--color-text-muted)'}}>Loading {ref_}…</span>
     </div>
   );
   if (!data) return null;
@@ -292,4 +305,3 @@ function ReadPanel({ ref_ }) {
     </div>
   );
 }
-

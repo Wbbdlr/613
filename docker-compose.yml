@@ -3,21 +3,20 @@ services:
     image: caddy:2-alpine
     restart: unless-stopped
     ports:
-      - "${HTTP_PORT:-80}:80"
-      - "${HTTPS_PORT:-443}:443"
+      - "${HTTP_PORT:-8613}:8613"
     volumes:
-      - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    configs:
+      - source: caddyfile
+        target: /etc/caddy/Caddyfile
     depends_on:
       - frontend
       - hebcal-service
       - sefaria-service
 
   frontend:
-    build:
-      context: ./frontend
-      target: runner
+    image: ghcr.io/wbbdlr/613-frontend:latest
     restart: unless-stopped
     environment:
       - NODE_ENV=production
@@ -25,8 +24,7 @@ services:
       - "3000"
 
   hebcal-service:
-    build:
-      context: ./hebcal-service
+    image: ghcr.io/wbbdlr/613-hebcal-service:latest
     restart: unless-stopped
     environment:
       - NODE_ENV=production
@@ -35,8 +33,7 @@ services:
       - "3001"
 
   sefaria-service:
-    build:
-      context: ./sefaria-service
+    image: ghcr.io/wbbdlr/613-sefaria-service:latest
     restart: unless-stopped
     environment:
       - NODE_ENV=production
@@ -45,8 +42,9 @@ services:
       - MEILI_HOST=http://meilisearch:7700
       - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterKey}
       - SEFARIA_DATA_DIR=/data/sefaria
+      - JWT_SECRET=${JWT_SECRET:-change_me_jwt_secret_in_production}
     volumes:
-      - ./sefaria-data:/data/sefaria
+      - sefaria_data:/data/sefaria
     expose:
       - "3002"
     depends_on:
@@ -64,7 +62,9 @@ services:
       - POSTGRES_DB=sefaria
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    configs:
+      - source: db_init_sql
+        target: /docker-entrypoint-initdb.d/init.sql
     expose:
       - "5432"
     healthcheck:
@@ -89,3 +89,94 @@ volumes:
   caddy_config:
   postgres_data:
   meili_data:
+  sefaria_data:
+
+configs:
+  caddyfile:
+    content: |
+      {
+          admin off
+      }
+
+      :8613 {
+          # Trust Cloudflare / reverse-proxy headers when exposed via tunnel
+          header_up X-Forwarded-Proto {scheme}
+          header_up X-Real-IP {remote_host}
+
+          # Service Worker must not be cached so browsers always get the latest version
+          header /sw.js Cache-Control "no-cache, no-store, must-revalidate"
+
+          # Hebcal API
+          handle /api/hebcal/* {
+              uri strip_prefix /api/hebcal
+              reverse_proxy hebcal-service:3001
+          }
+
+          # Sefaria API
+          handle /api/sefaria/* {
+              uri strip_prefix /api/sefaria
+              reverse_proxy sefaria-service:3002
+          }
+
+          # Frontend (React SPA — must be last / catch-all)
+          handle {
+              reverse_proxy frontend:3000
+          }
+      }
+
+  db_init_sql:
+    content: |
+      -- Registered users
+      CREATE TABLE IF NOT EXISTS users (
+          id            SERIAL PRIMARY KEY,
+          username      TEXT NOT NULL UNIQUE,
+          password_hash TEXT NOT NULL,
+          created_at    TIMESTAMPTZ DEFAULT now()
+      );
+
+      -- User notes on Sefaria passages
+      CREATE TABLE IF NOT EXISTS notes (
+          id          SERIAL PRIMARY KEY,
+          user_id     INT  NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          ref         TEXT NOT NULL,
+          text        TEXT NOT NULL,
+          created_at  TIMESTAMPTZ DEFAULT now(),
+          updated_at  TIMESTAMPTZ DEFAULT now()
+      );
+
+      -- Highlights on Sefaria passages
+      CREATE TABLE IF NOT EXISTS highlights (
+          id          SERIAL PRIMARY KEY,
+          user_id     INT  NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          ref         TEXT NOT NULL,
+          start_word  INT  NOT NULL,
+          end_word    INT  NOT NULL,
+          color       TEXT NOT NULL DEFAULT 'yellow',
+          note        TEXT,
+          created_at  TIMESTAMPTZ DEFAULT now()
+      );
+
+      -- Bookmarks (unique per user + ref)
+      CREATE TABLE IF NOT EXISTS bookmarks (
+          id          SERIAL PRIMARY KEY,
+          user_id     INT  NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          ref         TEXT NOT NULL,
+          label       TEXT,
+          created_at  TIMESTAMPTZ DEFAULT now(),
+          UNIQUE(user_id, ref)
+      );
+
+      -- Reading history
+      CREATE TABLE IF NOT EXISTS reading_history (
+          id          SERIAL PRIMARY KEY,
+          user_id     INT  NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          ref         TEXT NOT NULL,
+          visited_at  TIMESTAMPTZ DEFAULT now()
+      );
+
+      CREATE INDEX IF NOT EXISTS notes_user_idx      ON notes(user_id);
+      CREATE INDEX IF NOT EXISTS notes_ref_idx       ON notes(user_id, ref);
+      CREATE INDEX IF NOT EXISTS highlights_user_idx ON highlights(user_id);
+      CREATE INDEX IF NOT EXISTS highlights_ref_idx  ON highlights(user_id, ref);
+      CREATE INDEX IF NOT EXISTS bookmarks_user_idx  ON bookmarks(user_id);
+      CREATE INDEX IF NOT EXISTS history_user_idx    ON reading_history(user_id);
