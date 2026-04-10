@@ -18,7 +18,7 @@ git clone https://github.com/Wbbdlr/613.git
 cd 613
 ```
 
-No `.env` file is required. All essential defaults are inline in the compose files. If you want to override settings like `HTTP_PORT` or `JWT_SECRET`, copy [.env.example](/workspaces/613/.env.example) to `.env` and edit it.
+No `.env` file is required. All essential defaults are inline in the compose files. If you want to override settings like `HTTP_PORT`, `JWT_SECRET`, or `GIT_REF`, copy [.env.example](/workspaces/613/.env.example) to `.env` and edit it.
 
 ### 2. Start the stack
 
@@ -29,14 +29,15 @@ docker compose up -d --build
 The stack publishes the app on **http://SERVER_IP:8613** by default, or whatever `HTTP_PORT` you set in `.env`. You can expose that port directly or point Cloudflared, Caddy, Nginx Proxy Manager, or another reverse proxy at it.
 The compose files default the project name to `613-home`, but Dockge may still show container and volume names based on the stack name you choose in its UI.
 The production deployment now runs as a single `app` container with one persistent data volume.
+The main [docker-compose.yml](/workspaces/613/docker-compose.yml) builds directly from GitHub by default, so pasted-YAML deployments work without a local repo checkout.
 
 ### Default Deployment Model
 
-The default model is local repo build. Clone the repo onto the server or let Dockge deploy it as a repo-backed stack, then use [docker-compose.yml](/workspaces/613/docker-compose.yml). This avoids any GHCR dependency.
+The default model is remote Git build. Paste [docker-compose.yml](/workspaces/613/docker-compose.yml) into Dockge, or run it directly with Docker Compose, and it will build from this GitHub repository without any GHCR dependency.
 
 ### Optional: Explicit Repo-Build File
 
-If you prefer a separate compose file that makes the same repo-build intent explicit, you can use [docker-compose.repo-build.yml](/workspaces/613/docker-compose.repo-build.yml):
+If you prefer to build from a repo checkout already present on the server, use [docker-compose.repo-build.yml](/workspaces/613/docker-compose.repo-build.yml):
 
 ```bash
 docker compose -f docker-compose.repo-build.yml up -d --build
@@ -56,17 +57,17 @@ Set `GIT_REF` if you want to pin a tag or branch, for example `GIT_REF=v1.0.1`. 
 
 ### Using with Dockge
 
-[Dockge](https://github.com/louislam/dockge) works best here as a repo-backed stack, not pasted YAML.
+[Dockge](https://github.com/louislam/dockge) can deploy this directly from pasted YAML now.
 
 The recommended path is:
 
-1. Point Dockge at this Git repository.
-2. Use [docker-compose.yml](/workspaces/613/docker-compose.yml) as the compose file.
+1. Paste [docker-compose.yml](/workspaces/613/docker-compose.yml) into the stack.
+2. Optionally set `GIT_REF` if you want to pin a branch or tag.
 3. Deploy with build enabled.
 
-Add an `.env` only if you want to override defaults, especially `JWT_SECRET` or `HTTP_PORT`.
+Add an `.env` only if you want to override defaults, especially `JWT_SECRET`, `HTTP_PORT`, or `GIT_REF`.
 
-If your Dockge environment only supports pasted YAML and not a repo-backed build, use [docker-compose.remote-build.yml](/workspaces/613/docker-compose.remote-build.yml) instead and set `GIT_REF` if you want to pin a branch or tag.
+If your Dockge stack is repo-backed and you want builds to use the local checkout instead of GitHub as the build context, use [docker-compose.repo-build.yml](/workspaces/613/docker-compose.repo-build.yml) instead.
 
 > The GHCR publish workflow is optional now. It is no longer required for normal self-hosted deployment.
 
@@ -131,7 +132,7 @@ docker compose up --build
 Source code is bind-mounted in dev mode via `docker-compose.override.yml`.
 For local development, the override builds the unified app image from local source and keeps the app data in a Docker volume.
 Production-style deployments, including Dockge repo-backed stacks, use either the unified `613-app` image or local repo builds.
-Production-style deployments now default to local repo builds. Remote Git builds remain available when you need a single-file deploy.
+Production-style deployments now default to remote Git builds for single-file deploys. Local repo builds remain available via [docker-compose.repo-build.yml](/workspaces/613/docker-compose.repo-build.yml).
 
 ## License & Data
 

@@ -3,7 +3,7 @@ name: 613-home
 services:
   app:
     build:
-      context: .
+      context: https://github.com/Wbbdlr/613.git#${GIT_REF:-main}
       dockerfile: app/Dockerfile
     restart: unless-stopped
     ports:
