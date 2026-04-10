@@ -7,12 +7,30 @@ import styles from './HebcalPage.module.css';
 // PDF / print is handled by window.print() with print.css.
 
 const TABS = [
+  { id: 'Daily',     label: 'Daily',     icon: '✨' },
   { id: 'Calendar',  label: 'Calendar',  icon: '📅' },
   { id: 'Zmanim',   label: 'Zmanim',    icon: '🕰️' },
+  { id: 'Convert',  label: 'Convert',   icon: '🔁' },
   { id: 'Parsha',   label: 'Parsha',    icon: '📜' },
   { id: 'Daf Yomi', label: 'Daf Yomi',  icon: '📗' },
   { id: 'Nach Yomi',label: 'Nach Yomi', icon: '📘' },
   { id: 'Holidays', label: 'Holidays',  icon: '🕍' },
+];
+
+const HEBREW_MONTH_OPTIONS = [
+  { value: 1, label: 'Nisan (1)' },
+  { value: 2, label: 'Iyyar (2)' },
+  { value: 3, label: 'Sivan (3)' },
+  { value: 4, label: 'Tammuz (4)' },
+  { value: 5, label: 'Av (5)' },
+  { value: 6, label: 'Elul (6)' },
+  { value: 7, label: 'Tishrei (7)' },
+  { value: 8, label: 'Cheshvan (8)' },
+  { value: 9, label: 'Kislev (9)' },
+  { value: 10, label: 'Tevet (10)' },
+  { value: 11, label: 'Shevat (11)' },
+  { value: 12, label: 'Adar / Adar I (12)' },
+  { value: 13, label: 'Adar II (13)' },
 ];
 
 function todayStr() { return new Date().toISOString().slice(0, 10); }
@@ -74,8 +92,10 @@ export default function HebcalPage() {
       </div>
 
       <div className={styles.panel} role="tabpanel">
+        {tab === 'Daily'     && <DailyPanel />}
         {tab === 'Calendar'  && <CalendarPanel />}
         {tab === 'Zmanim'    && <ZmanimPanel />}
+        {tab === 'Convert'   && <ConvertPanel />}
         {tab === 'Parsha'    && <ParshaPanel />}
         {tab === 'Daf Yomi'  && <DafPanel />}
         {tab === 'Nach Yomi' && <NachPanel />}
@@ -83,11 +103,231 @@ export default function HebcalPage() {
       </div>
     </div>
   );
+
+  /* ─── Daily Summary ────────────────────────────────────────────────────────── */
+  function DailyPanel() {
+    const [city, setCity]         = useState('Jerusalem');
+    const [latInput, setLatInput] = useState('');
+    const [lonInput, setLonInput] = useState('');
+    const [tzid, setTzid]         = useState('Asia/Jerusalem');
+    const [date, setDate]         = useState(todayStr());
+    const [il, setIl]             = useState(true);
+    const [data, setData]         = useState(null);
+    const [error, setError]       = useState(null);
+
+    const load = () => {
+      setError(null);
+      try {
+        const gregorianDate = new Date(date);
+        if (Number.isNaN(gregorianDate.getTime())) {
+          setError('Invalid date.');
+          return;
+        }
+
+        let lat;
+        let lon;
+        let resolvedTzid;
+        let resolvedCity = city.trim();
+
+        if (resolvedCity) {
+          const loc = Location.lookup(resolvedCity);
+          if (!loc) {
+            setError(`City "${resolvedCity}" not found. Try a major city like "Jerusalem", "New York", or "London".`);
+            return;
+          }
+          lat = loc.latitude;
+          lon = loc.longitude;
+          resolvedTzid = loc.timeZoneId;
+          resolvedCity = loc.getName ? loc.getName() : resolvedCity;
+        } else if (latInput && lonInput) {
+          lat = parseFloat(latInput);
+          lon = parseFloat(lonInput);
+          resolvedTzid = tzid;
+          if (Number.isNaN(lat) || Number.isNaN(lon)) {
+            setError('Invalid coordinates.');
+            return;
+          }
+          resolvedCity = 'Custom coordinates';
+        } else {
+          setError('Enter a city name or lat/lon coordinates.');
+          return;
+        }
+
+        const hdate = new HDate(gregorianDate);
+        const parshaEvents = HebrewCalendar.calendar({
+          start: hdate,
+          end: hdate,
+          isHebrewYear: false,
+          il,
+          mask: flags.PARSHA_HASHAVUA,
+        });
+        const holidayEvents = HebrewCalendar.calendar({
+          start: hdate,
+          end: hdate,
+          isHebrewYear: false,
+          il,
+          mask: flags.HOLIDAYS | flags.MINOR_FAST | flags.ROSH_CHODESH,
+        });
+        const candleEvents = HebrewCalendar.calendar({
+          start: hdate,
+          end: hdate,
+          isHebrewYear: false,
+          il,
+          mask: flags.LIGHT_CANDLES | flags.YOM_TOV_ENDS,
+        });
+        const [dafEvent] = HebrewCalendar.calendar({ start: hdate, end: hdate, dailyLearning: { dafYomi: true } });
+        const [nachEvent] = HebrewCalendar.calendar({ start: hdate, end: hdate, dailyLearning: { nachYomi: true } });
+        const zmanim = new Zmanim(new GeoLocation(resolvedCity, lat, lon, 0, resolvedTzid), hdate, false);
+        const formatTime = (value) => value ? value.toISOString() : null;
+        const candleLighting = zmanim.sunset() ? new Date(zmanim.sunset().getTime() - (18 * 60 * 1000)) : null;
+        const havdalah = zmanim.tzeit();
+
+        setData({
+          date,
+          city: resolvedCity,
+          lat,
+          lon,
+          tzid: resolvedTzid,
+          hebrewDate: hdate.toString(),
+          parsha: parshaEvents[0] ? { en: parshaEvents[0].render('en'), he: parshaEvents[0].render('he') } : null,
+          holidays: holidayEvents.map((event) => ({ en: event.render('en'), he: event.render('he') })),
+          candleEvents: candleEvents.map((event) => ({ en: event.render('en'), he: event.render('he') })),
+          daf: dafEvent ? { en: dafEvent.render('en'), he: dafEvent.render('he') } : null,
+          nach: nachEvent ? { en: nachEvent.render('en'), he: nachEvent.render('he') } : null,
+          candleLighting: formatTime(candleLighting),
+          havdalah: formatTime(havdalah),
+          zmanim: {
+            alotHaShachar: formatTime(zmanim.alotHaShachar()),
+            misheyakir: formatTime(zmanim.misheyakir()),
+            dawn: formatTime(zmanim.dawn()),
+            sunrise: formatTime(zmanim.sunrise()),
+            sofZmanShmaMGA: formatTime(zmanim.sofZmanShmaMGA()),
+            sofZmanShma: formatTime(zmanim.sofZmanShma()),
+            sofZmanTfillaMGA: formatTime(zmanim.sofZmanTfillaMGA()),
+            sofZmanTfilla: formatTime(zmanim.sofZmanTfilla()),
+            chatzot: formatTime(zmanim.chatzot()),
+            minchaGedola: formatTime(zmanim.minchaGedola()),
+            minchaKetana: formatTime(zmanim.minchaKetana()),
+            plagHaMincha: formatTime(zmanim.plagHaMincha()),
+            sunset: formatTime(zmanim.sunset()),
+            beinHaShmashos: formatTime(zmanim.beinHaShmashos()),
+            tzeit: formatTime(zmanim.tzeit()),
+          },
+        });
+      } catch (err) {
+        setError(err.message || 'Could not calculate daily summary.');
+      }
+    };
+
+    return (
+      <div>
+        <div className={styles.controls}>
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>Date</span>
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>City</span>
+            <input placeholder="Jerusalem" value={city} onChange={e => setCity(e.target.value)} />
+          </label>
+          <span className={styles.orDivider}>or</span>
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>Lat</span>
+            <input placeholder="31.78" value={latInput} onChange={e => setLatInput(e.target.value)} style={{width:80}} />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>Lon</span>
+            <input placeholder="35.23" value={lonInput} onChange={e => setLonInput(e.target.value)} style={{width:90}} />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>Timezone</span>
+            <input placeholder="Asia/Jerusalem" value={tzid} onChange={e => setTzid(e.target.value)} style={{width:170}} />
+          </label>
+          <label className={styles.checkField}>
+            <input type="checkbox" checked={il} onChange={e => setIl(e.target.checked)} />
+            <span>Israel mode</span>
+          </label>
+          <button className={styles.btn} onClick={load}>Calculate</button>
+        </div>
+        {error && <p className={styles.error}>{error}</p>}
+        {data && (
+          <div className={styles.summaryLayout}>
+            <div className={styles.summaryCard}>
+              <div className={styles.cardTitle}>Date</div>
+              <p className={styles.summaryPrimary}>{data.date}</p>
+              <p className={styles.summarySecondary}>{data.hebrewDate}</p>
+              <p className={styles.summaryMeta}>{data.city} · {data.tzid}</p>
+            </div>
+            <div className={styles.summaryCard}>
+              <div className={styles.cardTitle}>Parsha</div>
+              <p className={styles.summaryPrimary}>{data.parsha?.en || 'No parsha reading'}</p>
+              {data.parsha?.he && <p dir="rtl" className={styles.heText}>{data.parsha.he}</p>}
+            </div>
+            <div className={styles.summaryCard}>
+              <div className={styles.cardTitle}>Learning</div>
+              <p className={styles.summaryPrimary}>{data.daf?.en || 'No Daf Yomi result'}</p>
+              {data.daf?.he && <p dir="rtl" className={styles.heText}>{data.daf.he}</p>}
+              <p className={styles.summarySecondary}>{data.nach?.en || 'No Nach Yomi result'}</p>
+              {data.nach?.he && <p dir="rtl" className={styles.heText}>{data.nach.he}</p>}
+            </div>
+            <div className={styles.summaryCard}>
+              <div className={styles.cardTitle}>Yomim Tovim / Rosh Chodesh</div>
+              {data.holidays.length === 0 && <p className={styles.summaryPrimary}>No special events</p>}
+              {data.holidays.map((event, index) => (
+                <div key={`${event.en}-${index}`} className={styles.summaryListItem}>
+                  <span>{event.en}</span>
+                  {event.he && <span dir="rtl" className={styles.heText}>{event.he}</span>}
+                </div>
+              ))}
+            </div>
+            <div className={styles.summaryCard}>
+              <div className={styles.cardTitle}>Candle Lighting / Havdalah</div>
+              <p className={styles.summaryPrimary}>
+                Candle lighting: {data.candleLighting
+                  ? new Date(data.candleLighting).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  : '—'}
+              </p>
+              <p className={styles.summarySecondary}>
+                Havdalah / tzeit: {data.havdalah
+                  ? new Date(data.havdalah).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  : '—'}
+              </p>
+              {data.candleEvents.length === 0 && <p className={styles.summaryPrimary}>No candle-lighting or havdalah event</p>}
+              {data.candleEvents.map((event, index) => (
+                <div key={`${event.en}-${index}`} className={styles.summaryListItem}>
+                  <span>{event.en}</span>
+                  {event.he && <span dir="rtl" className={styles.heText}>{event.he}</span>}
+                </div>
+              ))}
+            </div>
+            <div className={styles.summaryTableWrap}>
+              <table className={styles.table}>
+                <thead><tr><th>Zman</th><th>Time</th></tr></thead>
+                <tbody>
+                  {Object.entries(ZMANIM_LABELS).map(([key, label]) => (
+                    <tr key={key}>
+                      <td>{label}</td>
+                      <td className={styles.timeCell}>
+                        {data.zmanim[key]
+                          ? new Date(data.zmanim[key]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                          : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 }
 
 /* ─── Calendar ──────────────────────────────────────────────────────────────── */
 function CalendarPanel() {
   const [year, setYear]   = useState(thisYear());
+    dawn:             'Dawn',
   const [month, setMonth] = useState(thisMonth());
   const [il, setIl]       = useState(false);
   const [events, setEvents] = useState(null);
@@ -185,6 +425,7 @@ function ZmanimPanel() {
   const [lonInput, setLonInput] = useState('');
   const [tzid, setTzid]         = useState('America/New_York');
   const [date, setDate]         = useState(todayStr());
+  const [days, setDays]         = useState(1);
   const [data, setData]         = useState(null);
   const [error, setError]       = useState(null);
 
@@ -206,27 +447,43 @@ function ZmanimPanel() {
         setError('Enter a city name or lat/lon coordinates.'); return;
       }
 
-      const d    = new Date(date);
-      const gloc = new GeoLocation('', lat, lon, 0, tz);
-      const z    = new Zmanim(gloc, new HDate(d), false);
+      const totalDays = Math.min(Math.max(Number(days) || 1, 1), 31);
       const fmt  = t => t ? t.toISOString() : null;
+      const rows = [];
+
+      for (let index = 0; index < totalDays; index += 1) {
+        const currentDate = new Date(date);
+        currentDate.setDate(currentDate.getDate() + index);
+        const gloc = new GeoLocation('', lat, lon, 0, tz);
+        const z = new Zmanim(gloc, new HDate(currentDate), false);
+        rows.push({
+          date: currentDate.toISOString().slice(0, 10),
+          alotHaShachar: fmt(z.alotHaShachar()),
+          misheyakir: fmt(z.misheyakir()),
+          dawn: fmt(z.dawn()),
+          sunrise: fmt(z.sunrise()),
+          sofZmanShmaMGA: fmt(z.sofZmanShmaMGA()),
+          sofZmanShma: fmt(z.sofZmanShma()),
+          sofZmanTfillaMGA: fmt(z.sofZmanTfillaMGA()),
+          sofZmanTfilla: fmt(z.sofZmanTfilla()),
+          chatzot: fmt(z.chatzot()),
+          minchaGedola: fmt(z.minchaGedola()),
+          minchaKetana: fmt(z.minchaKetana()),
+          plagHaMincha: fmt(z.plagHaMincha()),
+          sunset: fmt(z.sunset()),
+          beinHaShmashos: fmt(z.beinHaShmashos()),
+          tzeit: fmt(z.tzeit()),
+        });
+      }
 
       setData({
-        date, lat, lon, tzid: tz,
-        alotHaShachar:    fmt(z.alotHaShachar()),
-        misheyakir:       fmt(z.misheyakir()),
-        sunrise:          fmt(z.sunrise()),
-        sofZmanShmaMGA:   fmt(z.sofZmanShmaMGA()),
-        sofZmanShma:      fmt(z.sofZmanShma()),
-        sofZmanTfillaMGA: fmt(z.sofZmanTfillaMGA()),
-        sofZmanTfilla:    fmt(z.sofZmanTfilla()),
-        chatzot:          fmt(z.chatzot()),
-        minchaGedola:     fmt(z.minchaGedola()),
-        minchaKetana:     fmt(z.minchaKetana()),
-        plagHaMincha:     fmt(z.plagHaMincha()),
-        sunset:           fmt(z.sunset()),
-        beinHaShmashos:   fmt(z.beinHaShmashos()),
-        tzeit:            fmt(z.tzeit()),
+        date,
+        lat,
+        lon,
+        tzid: tz,
+        days: totalDays,
+        rows,
+        ...rows[0],
       });
     } catch (err) { setError(err.message); }
   };
@@ -255,6 +512,10 @@ function ZmanimPanel() {
           <span className={styles.fieldLabel}>Date</span>
           <input type="date" value={date} onChange={e => setDate(e.target.value)} />
         </label>
+        <label className={styles.field}>
+          <span className={styles.fieldLabel}>Days</span>
+          <input type="number" min="1" max="31" value={days} onChange={e => setDays(Number(e.target.value))} style={{width:80}} />
+        </label>
         <button className={styles.btn} onClick={load}>Show</button>
         {data && (
           <button onClick={() => window.print()} className={`${styles.btn} ${styles.btnSecondary}`}
@@ -262,7 +523,7 @@ function ZmanimPanel() {
         )}
       </div>
       {error && <p className={styles.error}>{error}</p>}
-      {data && (
+      {data && data.days === 1 && (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead><tr><th>Zman</th><th>Time</th></tr></thead>
@@ -281,6 +542,106 @@ function ZmanimPanel() {
           </table>
         </div>
       )}
+      {data && data.days > 1 && (
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Date</th>
+                {Object.values(ZMANIM_LABELS).map((label) => <th key={label}>{label}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {data.rows.map((row) => (
+                <tr key={row.date}>
+                  <td>{row.date}</td>
+                  {Object.keys(ZMANIM_LABELS).map((key) => (
+                    <td key={`${row.date}-${key}`} className={styles.timeCell}>
+                      {row[key]
+                        ? new Date(row[key]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : '—'}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Date Conversion ─────────────────────────────────────────────────────── */
+function ConvertPanel() {
+  const [gregDate, setGregDate] = useState(todayStr());
+  const [gregResult, setGregResult] = useState(null);
+  const [hebrewDay, setHebrewDay] = useState(1);
+  const [hebrewMonth, setHebrewMonth] = useState(1);
+  const [hebrewYear, setHebrewYear] = useState(5786);
+  const [hebrewResult, setHebrewResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  const convertGregorian = () => {
+    setError(null);
+    try {
+      const converted = new HDate(new Date(gregDate));
+      setGregResult({ hebrewDate: converted.toString() });
+    } catch (err) {
+      setError(err.message || 'Could not convert Gregorian date.');
+    }
+  };
+
+  const convertHebrew = () => {
+    setError(null);
+    try {
+      const converted = new HDate(Number(hebrewDay), Number(hebrewMonth), Number(hebrewYear));
+      setHebrewResult({ gregorianDate: converted.greg().toISOString().slice(0, 10) });
+    } catch (err) {
+      setError(err.message || 'Could not convert Hebrew date. Use the month number expected by Hebcal.');
+    }
+  };
+
+  return (
+    <div className={styles.convertLayout}>
+      <div className={styles.summaryCard}>
+        <div className={styles.cardTitle}>Gregorian to Hebrew</div>
+        <div className={styles.controls}>
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>Gregorian Date</span>
+            <input type="date" value={gregDate} onChange={e => setGregDate(e.target.value)} />
+          </label>
+          <button className={styles.btn} onClick={convertGregorian}>Convert</button>
+        </div>
+        {gregResult && <p className={styles.summaryPrimary}>{gregResult.hebrewDate}</p>}
+      </div>
+
+      <div className={styles.summaryCard}>
+        <div className={styles.cardTitle}>Hebrew to Gregorian</div>
+        <div className={styles.controls}>
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>Day</span>
+            <input type="number" min="1" max="30" value={hebrewDay} onChange={e => setHebrewDay(Number(e.target.value))} />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>Hebrew Month</span>
+            <select value={hebrewMonth} onChange={e => setHebrewMonth(Number(e.target.value))}>
+              {HEBREW_MONTH_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>Hebrew Year</span>
+            <input type="number" min="5000" max="7000" value={hebrewYear} onChange={e => setHebrewYear(Number(e.target.value))} />
+          </label>
+          <button className={styles.btn} onClick={convertHebrew}>Convert</button>
+        </div>
+        <p className={styles.summaryMeta}>Month names map to the numbering expected by the local Hebcal library. In leap years, use Adar II for month 13.</p>
+        {hebrewResult && <p className={styles.summaryPrimary}>{hebrewResult.gregorianDate}</p>}
+      </div>
+
+      {error && <p className={styles.error}>{error}</p>}
     </div>
   );
 }

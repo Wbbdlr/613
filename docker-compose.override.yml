@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: app/Dockerfile
+    restart: unless-stopped
     environment:
       - NODE_ENV=development
       - APP_DATA_DIR=/data
