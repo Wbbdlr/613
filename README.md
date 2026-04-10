@@ -23,25 +23,20 @@ cp .env.example .env
 ### 2. Start the stack
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
 The UI will be available at **http://localhost** (or whatever `HTTP_PORT` you set).
 
 ### Using with Dockge
 
-[Dockge](https://github.com/louislam/dockge) requires the full repo to be present because the compose file builds images from local source directories.
+[Dockge](https://github.com/louislam/dockge) can deploy directly from the compose YAML because production services use prebuilt images from GHCR.
 
-1. Clone the repo directly into your Dockge stacks folder:
-   ```bash
-   cd /opt/dockge/stacks   # or wherever your Dockge stacks live
-   git clone https://github.com/Wbbdlr/613.git 613
-   ```
-2. Copy `.env.example` to `.env` inside the `613/` folder and set your variables.
-3. Open Dockge in your browser — the **613** stack will appear automatically.
-4. Click **Deploy** (Dockge will run `docker compose up --build` for you).
+1. In Dockge, create/import a stack with this repo's `docker-compose.yml` content.
+2. Add an `.env` for the stack (copy values from `.env.example`).
+3. Click **Deploy**.
 
-> **Note:** Do not copy `docker-compose.yml` to a separate directory on its own. The build contexts (`./frontend`, `./hebcal-service`, `./sefaria-service`, etc.) must be present relative to the compose file.
+> **Optional local-source builds:** if you want to build services from source instead of pulling GHCR images, clone the full repo and run with `docker-compose.override.yml`.
 
 ### 3. Seed Sefaria data (one-time, ~2 GB download)
 
