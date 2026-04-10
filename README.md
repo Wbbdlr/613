@@ -30,6 +30,16 @@ docker compose up -d
 The stack publishes the proxy on **http://SERVER_IP:8613** by default, or whatever `HTTP_PORT` you set in `.env`. You can expose that port directly or point Cloudflared, Caddy, Nginx Proxy Manager, or another reverse proxy at it.
 By default it pulls the `stable` image channel; set `IMAGE_TAG` in `.env` if you want to pin a different published tag such as a versioned release tag.
 
+### Optional: Repo-Build Deployment
+
+If you want to avoid any container registry dependency, deploy from a checked-out repo and use [docker-compose.repo-build.yml](/workspaces/613/docker-compose.repo-build.yml):
+
+```bash
+docker compose -f docker-compose.repo-build.yml up -d --build
+```
+
+This builds `frontend`, `hebcal-service`, and `sefaria-service` locally on the target host. It is suitable for Dockge repo-backed stacks, but not for a pasted single-file stack because the build contexts must exist on disk.
+
 ### Using with Dockge
 
 [Dockge](https://github.com/louislam/dockge) can deploy this stack directly from a single pasted compose file. The production stack no longer depends on external config files; it writes the Caddy config and Postgres init SQL inside the containers at startup.
@@ -40,6 +50,8 @@ For public Dockge deployments, the GHCR packages must be publicly readable. Afte
 2. Add an `.env` only if you want to override defaults, especially `MEILI_MASTER_KEY`, `JWT_SECRET`, or `IMAGE_TAG`.
 3. Point your external tunnel or reverse proxy at the published host port, default `8613`.
 4. Click **Deploy**.
+
+If your Dockge stack is repo-backed instead of pasted YAML, you can use [docker-compose.repo-build.yml](/workspaces/613/docker-compose.repo-build.yml) instead and skip GHCR entirely.
 
 > **Optional local-source builds:** if you want to build from source, clone the full repo and run `docker compose up --build` from that repo root (the override file is auto-applied there).
 
