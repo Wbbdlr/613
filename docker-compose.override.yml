@@ -1,50 +1,21 @@
-# Development overrides – build locally with bind-mount source for hot reload
+# Development overrides – build locally from source on top of the consolidated app layout
 services:
-  proxy:
-    volumes:
-      - caddy_data:/data
-      - caddy_config:/config
-      - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
-
-  frontend:
+  app:
     build:
-      context: ./frontend
-      target: dev
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-    expose:
-      - "3000"
-
-  hebcal-service:
-    build:
-      context: ./hebcal-service
-    volumes:
-      - ./hebcal-service:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-    expose:
-      - "3001"
-    command: ["node", "--watch", "src/index.js"]
-
-  sefaria-service:
-    build:
-      context: ./sefaria-service
-    volumes:
-      - ./sefaria-service:/app
-      - /app/node_modules
-      - ./sefaria-data:/data/sefaria
+      context: .
+      dockerfile: app/Dockerfile
     environment:
       - NODE_ENV=development
       - JWT_SECRET=${JWT_SECRET:-dev-secret}
-    expose:
-      - "3002"
-    command: ["node", "--watch", "src/index.js"]
+    volumes:
+      - ./app/src:/app/src
+      - ./hebcal-service/src:/app/hebcal-service/src
+      - ./sefaria-service/src:/app/sefaria-service/src
+      - ./sefaria-data:/data/sefaria
 
   db:
+    build:
+      context: ./db
     expose:
       - "5432"
 

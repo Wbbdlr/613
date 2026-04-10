@@ -16,18 +16,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - service: frontend
-            context: ./frontend
-            build-args: "target=runner"
-            target: runner
+          - service: app
+            context: .
+            dockerfile: ./app/Dockerfile
+            target: ""
           - service: db
             context: ./db
-            target: ""
-          - service: hebcal-service
-            context: ./hebcal-service
-            target: ""
-          - service: sefaria-service
-            context: ./sefaria-service
+            dockerfile: ./db/Dockerfile
             target: ""
 
     steps:
@@ -63,6 +58,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
           target: ${{ matrix.target }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}

@@ -27,9 +27,10 @@ docker compose pull
 docker compose up -d
 ```
 
-The stack publishes the proxy on **http://SERVER_IP:8613** by default, or whatever `HTTP_PORT` you set in `.env`. You can expose that port directly or point Cloudflared, Caddy, Nginx Proxy Manager, or another reverse proxy at it.
+The stack publishes the app on **http://SERVER_IP:8613** by default, or whatever `HTTP_PORT` you set in `.env`. You can expose that port directly or point Cloudflared, Caddy, Nginx Proxy Manager, or another reverse proxy at it.
 By default it pulls the `stable` image channel; set `IMAGE_TAG` in `.env` if you want to pin a different published tag such as a versioned release tag.
 The compose files default the project name to `613-home`, but Dockge may still show container and volume names based on the stack name you choose in its UI.
+The production deployment now runs as three containers total: `app`, `db`, and `meilisearch`.
 
 ### Optional: Repo-Build Deployment
 
@@ -39,7 +40,7 @@ If you want to avoid any container registry dependency, deploy from a checked-ou
 docker compose -f docker-compose.repo-build.yml up -d --build
 ```
 
-This builds `frontend`, `hebcal-service`, and `sefaria-service` locally on the target host. It is suitable for Dockge repo-backed stacks, but not for a pasted single-file stack because the build contexts must exist on disk.
+This builds the unified `app` image locally on the target host. It is suitable for Dockge repo-backed stacks, but not for a pasted single-file stack because the build contexts must exist on disk.
 
 ### Optional: Remote-Build Single File
 
@@ -53,9 +54,9 @@ Set `GIT_REF` if you want to pin a tag or branch, for example `GIT_REF=v1.0.1`. 
 
 ### Using with Dockge
 
-[Dockge](https://github.com/louislam/dockge) can deploy this stack directly from a single pasted compose file. The production stack no longer depends on external config files; it writes the Caddy config and Postgres init SQL inside the containers at startup.
+[Dockge](https://github.com/louislam/dockge) can deploy this stack directly from a single pasted compose file.
 
-For public Dockge deployments, the GHCR packages must be publicly readable. After the first publish, set each package to **Public** in GitHub Packages if they are not already public: `613-frontend`, `613-db`, `613-hebcal-service`, and `613-sefaria-service`.
+For public Dockge deployments, the GHCR packages must be publicly readable. After the first publish, set each package to **Public** in GitHub Packages if they are not already public: `613-app` and `613-db`.
 
 1. In Dockge, paste [docker-compose.yml](/workspaces/613/docker-compose.yml) as the stack definition.
 2. Add an `.env` only if you want to override defaults, especially `MEILI_MASTER_KEY`, `JWT_SECRET`, or `IMAGE_TAG`.
@@ -81,10 +82,7 @@ This downloads the [Sefaria-Export](https://github.com/Sefaria-Project/Sefaria-E
 
 | Service | Internal Port | Description |
 |---|---|---|
-| `proxy` | 8613 | Caddy reverse proxy (internal entry point) |
-| `frontend` | 3000 | React UI |
-| `hebcal-service` | 3001 | Hebcal REST API + PDF export |
-| `sefaria-service` | 3002 | Sefaria text API + notes |
+| `app` | 8613 | Unified frontend + API server |
 | `db` | 5432 | PostgreSQL (notes, highlights, bookmarks) |
 | `meilisearch` | 7700 | Full-text search engine |
 
@@ -130,9 +128,9 @@ docker compose up --build
 ```
 
 Source code is bind-mounted in dev mode via `docker-compose.override.yml`.
-For local development, the override switches the frontend target to `dev` (hot reload).
-Production-style deployments, including Dockge repo-backed stacks, use prebuilt GHCR images by default.
-Production-style deployments from a single Dockge compose file also work because required config is generated at container startup.
+For local development, the override builds the unified app image from local source.
+Production-style deployments, including Dockge repo-backed stacks, use either the unified `613-app` image or local repo builds.
+Production-style deployments from a single Dockge compose file work by pulling the published `613-app` and `613-db` images.
 
 ## License & Data
 
@@ -144,10 +142,10 @@ Production-style deployments from a single Dockge compose file also work because
 
 ```
 Browser
-  └── Caddy (proxy)
-       ├── /              → frontend:3000 (React)
-       ├── /api/hebcal/*  → hebcal-service:3001 (Node.js)
-       └── /api/sefaria/* → sefaria-service:3002 (Node.js)
+  └── app:8613 (React SPA + Node.js APIs)
+       ├── /              → built frontend assets
+       ├── /api/hebcal/*  → Hebcal routes
+       └── /api/sefaria/* → Sefaria routes
                                 ├── PostgreSQL (notes/highlights)
                                 └── MeiliSearch (full-text search)
 ```

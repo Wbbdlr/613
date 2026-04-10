@@ -1,81 +1,14 @@
 name: 613-home
 
 services:
-  proxy:
-    image: caddy:2-alpine
+  app:
+    image: ghcr.io/wbbdlr/613-app:${IMAGE_TAG:-stable}
     restart: unless-stopped
     ports:
       - "${HTTP_PORT:-8613}:8613"
-    entrypoint: ["/bin/sh", "-ec"]
-    command: |
-      cat >/etc/caddy/Caddyfile <<'EOF'
-      {
-          admin off
-      }
-
-      :8613 {
-          # Service Worker must not be cached so browsers always get the latest version
-          header /sw.js Cache-Control "no-cache, no-store, must-revalidate"
-
-          # Hebcal API
-          handle /api/hebcal/* {
-              uri strip_prefix /api/hebcal
-              reverse_proxy hebcal-service:3001 {
-                  header_up X-Forwarded-Proto {scheme}
-                  header_up X-Real-IP {remote_host}
-              }
-          }
-
-          # Sefaria API
-          handle /api/sefaria/* {
-              uri strip_prefix /api/sefaria
-              reverse_proxy sefaria-service:3002 {
-                  header_up X-Forwarded-Proto {scheme}
-                  header_up X-Real-IP {remote_host}
-              }
-          }
-
-          # Frontend (React SPA — must be last / catch-all)
-          handle {
-              reverse_proxy frontend:3000 {
-                  header_up X-Forwarded-Proto {scheme}
-                  header_up X-Real-IP {remote_host}
-              }
-          }
-      }
-      EOF
-      exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
-    volumes:
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - frontend
-      - hebcal-service
-      - sefaria-service
-
-  frontend:
-    image: ghcr.io/wbbdlr/613-frontend:${IMAGE_TAG:-stable}
-    restart: unless-stopped
     environment:
       - NODE_ENV=production
-    expose:
-      - "3000"
-
-  hebcal-service:
-    image: ghcr.io/wbbdlr/613-hebcal-service:${IMAGE_TAG:-stable}
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - PORT=3001
-    expose:
-      - "3001"
-
-  sefaria-service:
-    image: ghcr.io/wbbdlr/613-sefaria-service:${IMAGE_TAG:-stable}
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - PORT=3002
+      - PORT=8613
       - DATABASE_URL=postgresql://sefaria:sefaria@db:5432/sefaria
       - MEILI_HOST=http://meilisearch:7700
       - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterKey}
@@ -83,8 +16,6 @@ services:
       - JWT_SECRET=${JWT_SECRET:-change_me_jwt_secret_in_production}
     volumes:
       - sefaria_data:/data/sefaria
-    expose:
-      - "3002"
     depends_on:
       db:
         condition: service_healthy
@@ -121,8 +52,6 @@ services:
       - "7700"
 
 volumes:
-  caddy_data:
-  caddy_config:
   postgres_data:
   meili_data:
   sefaria_data:

@@ -19,46 +19,27 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build frontend
+      - name: Build app image
         uses: docker/build-push-action@v6
         with:
-          context: ./frontend
-          target: runner  # multi-stage: dev → build → runner (serves static dist/ via `serve`)
+          context: .
+          file: ./app/Dockerfile
           push: false
           load: true
-          tags: 613-frontend:ci
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,mode=max,scope=frontend
-
-      - name: Build hebcal-service
-        uses: docker/build-push-action@v6
-        with:
-          context: ./hebcal-service
-          push: false
-          load: true
-          tags: 613-hebcal:ci
-          cache-from: type=gha,scope=hebcal
-          cache-to: type=gha,mode=max,scope=hebcal
+          tags: 613-app:ci
+          cache-from: type=gha,scope=app
+          cache-to: type=gha,mode=max,scope=app
 
       - name: Build db image
         uses: docker/build-push-action@v6
         with:
           context: ./db
+          file: ./db/Dockerfile
           push: false
           load: true
           tags: 613-db:ci
           cache-from: type=gha,scope=db
           cache-to: type=gha,mode=max,scope=db
-
-      - name: Build sefaria-service
-        uses: docker/build-push-action@v6
-        with:
-          context: ./sefaria-service
-          push: false
-          load: true
-          tags: 613-sefaria:ci
-          cache-from: type=gha,scope=sefaria
-          cache-to: type=gha,mode=max,scope=sefaria
 
   # ── Unit / Testcontainers tests ────────────────────────────────────────────
   unit-test:
@@ -103,38 +84,23 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build frontend image for production compose
+      - name: Build app image for production compose
         uses: docker/build-push-action@v6
         with:
-          context: ./frontend
-          target: runner
+          context: .
+          file: ./app/Dockerfile
           push: false
           load: true
-          tags: ghcr.io/wbbdlr/613-frontend:stable
-
-      - name: Build hebcal-service image for production compose
-        uses: docker/build-push-action@v6
-        with:
-          context: ./hebcal-service
-          push: false
-          load: true
-          tags: ghcr.io/wbbdlr/613-hebcal-service:stable
+          tags: ghcr.io/wbbdlr/613-app:stable
 
       - name: Build db image for production compose
         uses: docker/build-push-action@v6
         with:
           context: ./db
+          file: ./db/Dockerfile
           push: false
           load: true
           tags: ghcr.io/wbbdlr/613-db:stable
-
-      - name: Build sefaria-service image for production compose
-        uses: docker/build-push-action@v6
-        with:
-          context: ./sefaria-service
-          push: false
-          load: true
-          tags: ghcr.io/wbbdlr/613-sefaria-service:stable
 
       - name: Copy env file
         run: cp .env.example .env

@@ -20,135 +20,66 @@ services:
               uri strip_prefix /api/hebcal
               reverse_proxy hebcal-service:3001 {
                   header_up X-Forwarded-Proto {scheme}
-                  header_up X-Real-IP {remote_host}
-              }
-          }
+                  name: 613-home
 
-          handle /api/sefaria/* {
-              uri strip_prefix /api/sefaria
-              reverse_proxy sefaria-service:3002 {
-                  header_up X-Forwarded-Proto {scheme}
-                  header_up X-Real-IP {remote_host}
-              }
-          }
+                  services:
+                    app:
+                      build:
+                        context: https://github.com/Wbbdlr/613.git#${GIT_REF:-main}
+                        dockerfile: app/Dockerfile
+                      restart: unless-stopped
+                      ports:
+                        - "${HTTP_PORT:-8613}:8613"
+                      environment:
+                        - NODE_ENV=production
+                        - PORT=8613
+                        - DATABASE_URL=postgresql://sefaria:sefaria@db:5432/sefaria
+                        - MEILI_HOST=http://meilisearch:7700
+                        - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterKey}
+                        - SEFARIA_DATA_DIR=/data/sefaria
+                        - JWT_SECRET=${JWT_SECRET:-change_me_jwt_secret_in_production}
+                      volumes:
+                        - sefaria_data:/data/sefaria
+                      depends_on:
+                        db:
+                          condition: service_healthy
+                        meilisearch:
+                          condition: service_started
 
-          handle {
-              reverse_proxy frontend:3000 {
-                  header_up X-Forwarded-Proto {scheme}
-                  header_up X-Real-IP {remote_host}
-              }
-          }
-      }
-      EOF
-      exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
-    volumes:
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - frontend
-      - hebcal-service
-      - sefaria-service
+                    db:
+                      build:
+                        context: https://github.com/Wbbdlr/613.git#${GIT_REF:-main}:db
+                      restart: unless-stopped
+                      environment:
+                        - POSTGRES_USER=sefaria
+                        - POSTGRES_PASSWORD=sefaria
+                        - POSTGRES_DB=sefaria
+                      volumes:
+                        - postgres_data:/var/lib/postgresql/data
+                      expose:
+                        - "5432"
+                      healthcheck:
+                        test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+                        interval: 10s
+                        timeout: 5s
+                        retries: 12
+                        start_period: 30s
 
-  frontend:
-    build:
-      context: https://github.com/Wbbdlr/613.git#${GIT_REF:-main}:frontend
-      target: runner
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-    expose:
-      - "3000"
+                    meilisearch:
+                      image: getmeili/meilisearch:v1.7
+                      restart: unless-stopped
+                      environment:
+                        - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterKey}
+                        - MEILI_ENV=production
+                      volumes:
+                        - meili_data:/meili_data
+                      expose:
+                        - "7700"
 
-  hebcal-service:
-    build:
-      context: https://github.com/Wbbdlr/613.git#${GIT_REF:-main}:hebcal-service
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - PORT=3001
-    expose:
-      - "3001"
-
-  sefaria-service:
-    build:
-      context: https://github.com/Wbbdlr/613.git#${GIT_REF:-main}:sefaria-service
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - PORT=3002
-      - DATABASE_URL=postgresql://sefaria:sefaria@db:5432/sefaria
-      - MEILI_HOST=http://meilisearch:7700
-      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterKey}
-      - SEFARIA_DATA_DIR=/data/sefaria
-      - JWT_SECRET=${JWT_SECRET:-change_me_jwt_secret_in_production}
-    volumes:
-      - sefaria_data:/data/sefaria
-    expose:
-      - "3002"
-    depends_on:
-      db:
-        condition: service_healthy
-      meilisearch:
-        condition: service_started
-
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    entrypoint: ["/bin/sh", "-ec"]
-    command: |
-      cat >/docker-entrypoint-initdb.d/init.sql <<'EOF'
-      -- Registered users
-      CREATE TABLE IF NOT EXISTS users (
-          id            SERIAL PRIMARY KEY,
-          username      TEXT NOT NULL UNIQUE,
-          password_hash TEXT NOT NULL,
-          created_at    TIMESTAMPTZ DEFAULT now()
-      );
-
-      -- User notes on Sefaria passages
-      CREATE TABLE IF NOT EXISTS notes (
-          id          SERIAL PRIMARY KEY,
-          user_id     INT  NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          ref         TEXT NOT NULL,
-          text        TEXT NOT NULL,
-          created_at  TIMESTAMPTZ DEFAULT now(),
-          updated_at  TIMESTAMPTZ DEFAULT now()
-      );
-
-      -- Highlights on Sefaria passages
-      CREATE TABLE IF NOT EXISTS highlights (
-          id          SERIAL PRIMARY KEY,
-          user_id     INT  NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          ref         TEXT NOT NULL,
-          start_word  INT  NOT NULL,
-          end_word    INT  NOT NULL,
-          color       TEXT NOT NULL DEFAULT 'yellow',
-          note        TEXT,
-          created_at  TIMESTAMPTZ DEFAULT now()
-      );
-
-      -- Bookmarks (unique per user + ref)
-      CREATE TABLE IF NOT EXISTS bookmarks (
-          id          SERIAL PRIMARY KEY,
-          user_id     INT  NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          ref         TEXT NOT NULL,
-          label       TEXT,
-          created_at  TIMESTAMPTZ DEFAULT now(),
-          UNIQUE(user_id, ref)
-      );
-
-      -- Reading history
-      CREATE TABLE IF NOT EXISTS reading_history (
-          id          SERIAL PRIMARY KEY,
-          user_id     INT  NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          ref         TEXT NOT NULL,
-          visited_at  TIMESTAMPTZ DEFAULT now()
-      );
-
-      CREATE INDEX IF NOT EXISTS notes_user_idx      ON notes(user_id);
-      CREATE INDEX IF NOT EXISTS notes_ref_idx       ON notes(user_id, ref);
-      CREATE INDEX IF NOT EXISTS highlights_user_idx ON highlights(user_id);
-      CREATE INDEX IF NOT EXISTS highlights_ref_idx  ON highlights(user_id, ref);
+                  volumes:
+                    postgres_data:
+                    meili_data:
+                    sefaria_data:
       CREATE INDEX IF NOT EXISTS bookmarks_user_idx  ON bookmarks(user_id);
       CREATE INDEX IF NOT EXISTS history_user_idx    ON reading_history(user_id);
       EOF
