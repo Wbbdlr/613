@@ -14,7 +14,6 @@ services:
     build:
       context: ./frontend
       target: dev
-    image: ""
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -26,7 +25,6 @@ services:
   hebcal-service:
     build:
       context: ./hebcal-service
-    image: ""
     volumes:
       - ./hebcal-service:/app
       - /app/node_modules
@@ -39,7 +37,6 @@ services:
   sefaria-service:
     build:
       context: ./sefaria-service
-    image: ""
     volumes:
       - ./sefaria-service:/app
       - /app/node_modules
