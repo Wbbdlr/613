@@ -57,7 +57,7 @@ export default function HebcalPage() {
         </div>
       )}
 
-      <h1 className={styles.title}>Jewish Calendar Tools</h1>
+      <h1 className={styles.title}>Luach — Jewish Calendar</h1>
 
       {/* Tab bar */}
       <div className={styles.tabs} role="tablist">
@@ -221,21 +221,20 @@ function ZmanimPanel() {
   };
 
   const LABELS = {
-    alotHaShachar:    'Alot HaShachar (Dawn)',
+    alotHaShachar:    'Alos HaShachar',
     misheyakir:       'Misheyakir',
-    dawn:             'Civil Dawn',
-    sunrise:          'Sunrise (Netz)',
-    sofZmanShmaMGA:   'Sof Zman Shma (MGA)',
-    sofZmanShma:      'Sof Zman Shma (GRA)',
-    sofZmanTfillaMGA: 'Sof Zman Tfilla (MGA)',
-    sofZmanTfilla:    'Sof Zman Tfilla (GRA)',
-    chatzot:          'Chatzot',
-    minchaGedola:     'Mincha Gedola',
-    minchaKetana:     'Mincha Ketana',
+    sunrise:          'Netz HaChama',
+    sofZmanShmaMGA:   'Sof Zman Krias Shma (MGA)',
+    sofZmanShma:      'Sof Zman Krias Shma (GRA)',
+    sofZmanTfillaMGA: 'Sof Zman Tefila (MGA)',
+    sofZmanTfilla:    'Sof Zman Tefila (GRA)',
+    chatzot:          'Chatzos',
+    minchaGedola:     'Mincha Gedolah',
+    minchaKetana:     'Mincha Ketanah',
     plagHaMincha:     'Plag HaMincha',
-    sunset:           'Sunset (Shkia)',
+    sunset:           'Shkias HaChama',
     beinHaShmashos:   'Bein HaShmashos',
-    tzeit:            "Tzeit HaKochavim",
+    tzeit:            'Tzeis HaKochavim',
   };
 
   return (
@@ -361,7 +360,7 @@ function DafPanel() {
           <div className={styles.cardBody}>
             <p>{data.display || '—'}</p>
             {data.displayHe && <p dir="rtl" className={styles.heText}>{data.displayHe}</p>}
-            {data.tractate && <p className={styles.cardMeta}>{data.tractate} · Daf {data.daf}</p>}
+            {data.tractate && <p className={styles.cardMeta}>Masechta {data.tractate} · Daf {data.daf}</p>}
           </div>
         </div>
       )}

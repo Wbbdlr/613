@@ -18,7 +18,7 @@ export default function SefariaPage() {
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Sefaria Reader</h1>
+      <h1 className={styles.title}>Seforim</h1>
       <div className={styles.tabs} role="tablist">
         <button
           role="tab" aria-selected={view === 'search'}
@@ -73,7 +73,7 @@ function SearchPanel({ onOpen }) {
           className={styles.searchInput}
           value={q}
           onChange={e => setQ(e.target.value)}
-          placeholder="Search texts… (requires indexed data)"
+          placeholder="Search seforim… (requires indexed data)"
           autoFocus
         />
         <button type="submit" className={styles.btn} disabled={loading}>
@@ -156,7 +156,7 @@ function BrowsePanel({ onOpen }) {
           <>
             <div className={styles.chapterHeader}>
               <span className={styles.chapterBookName}>{selectedBook}</span>
-              <span className={styles.chapterCount}>{bookMeta.chapters} chapters</span>
+              <span className={styles.chapterCount}>{bookMeta.chapters} perakim</span>
             </div>
             <div className={styles.chapterGrid}>
               {Array.from({ length: bookMeta.chapters }, (_, i) => (
@@ -234,7 +234,7 @@ function ReadPanel({ ref_ }) {
       <div className={styles.textArea}>
         <div className={styles.textHeader}>
           <h2 className={styles.textTitle}>{data.ref}</h2>
-          <span className={styles.chapterBadge}>Chapter {chapter}</span>
+          <span className={styles.chapterBadge}>Perek {chapter}</span>
         </div>
         {data.en.map((verse, i) => {
           const verseRef = `${book} ${chapter}:${i + 1}`;
@@ -243,7 +243,7 @@ function ReadPanel({ ref_ }) {
               key={i}
               className={`${styles.verse} ${selectedVerse === verseRef ? styles.verseSelected : ''}`}
               onClick={() => setSelectedVerse(verseRef)}
-              title="Click to add a note"
+              title="Click to add a note to this passuk"
             >
               <span className={styles.verseNum}>{i + 1}</span>
               <div className={styles.verseContent}>
