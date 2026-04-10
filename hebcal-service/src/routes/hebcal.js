@@ -37,7 +37,6 @@ router.get('/events', (req, res) => {
     title: ev.render('en'),
     titleHe: ev.render('he'),
     category: ev.getCategories()[0] || '',
-    url: ev.url ? ev.url() : null,
   }));
 
   res.json({ year, month, il, events });
