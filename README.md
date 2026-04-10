@@ -28,6 +28,21 @@ docker compose up -d --build
 
 The UI will be available at **http://localhost** (or whatever `HTTP_PORT` you set).
 
+### Using with Dockge
+
+[Dockge](https://github.com/louislam/dockge) requires the full repo to be present because the compose file builds images from local source directories.
+
+1. Clone the repo directly into your Dockge stacks folder:
+   ```bash
+   cd /opt/dockge/stacks   # or wherever your Dockge stacks live
+   git clone https://github.com/Wbbdlr/613.git 613
+   ```
+2. Copy `.env.example` to `.env` inside the `613/` folder and set your variables.
+3. Open Dockge in your browser — the **613** stack will appear automatically.
+4. Click **Deploy** (Dockge will run `docker compose up --build` for you).
+
+> **Note:** Do not copy `docker-compose.yml` to a separate directory on its own. The build contexts (`./frontend`, `./hebcal-service`, `./sefaria-service`, etc.) must be present relative to the compose file.
+
 ### 3. Seed Sefaria data (one-time, ~2 GB download)
 
 ```bash

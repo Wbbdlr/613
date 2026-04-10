@@ -10,10 +10,12 @@
     "test": "node --test --test-timeout=120000 tests/notes.test.js"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "express-rate-limit": "^7.3.1",
     "glob": "^10.3.10",
+    "jsonwebtoken": "^9.0.2",
     "meilisearch": "^0.39.0",
     "pg": "^8.11.5"
   },

@@ -1,0 +1,111 @@
+/* ── Global theme via CSS custom properties ───────────────────────────── */
+:root {
+  /* Backgrounds */
+  --color-bg-page:         #f4f1eb;
+  --color-bg-surface:      #ffffff;
+  --color-bg-surface-alt:  #f8f5ef;
+  --color-bg-hover:        #f4f1eb;
+  --color-bg-accent:       #eef4fb;
+  --color-bg-header:       linear-gradient(135deg, #0f2744 0%, #1a3a5c 60%, #1e4570 100%);
+  --color-bg-footer:       #0f2744;
+
+  /* Text */
+  --color-text-primary:    #222222;
+  --color-text-secondary:  #555555;
+  --color-text-muted:      #888888;
+  --color-text-faint:      #aaaaaa;
+
+  /* Borders */
+  --color-border:          #dddddd;
+  --color-border-warm:     #ede8df;
+  --color-border-accent:   #dce8f5;
+
+  /* Brand (same across themes — header is always dark) */
+  --color-brand:           #1a3a5c;
+  --color-brand-hover:     #254e7d;
+  --color-brand-text:      #f5d77e;
+
+  /* Notes / highlights */
+  --color-note-bg:         #fffde7;
+  --color-note-border:     #f0e68c;
+  --color-mark-bg:         #fff3a0;
+
+  /* Title color */
+  --color-title:           #0f2744;
+
+  /* Today banner (always dark) */
+  --color-today-bg:        linear-gradient(135deg, #0f2744 0%, #1a3a5c 100%);
+}
+
+/* ── Dark theme ──────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --color-bg-page:         #121212;
+  --color-bg-surface:      #1e1e1e;
+  --color-bg-surface-alt:  #252525;
+  --color-bg-hover:        #2a2a2a;
+  --color-bg-accent:       #1a2a3a;
+
+  --color-text-primary:    #e8e4df;
+  --color-text-secondary:  #b0aca7;
+  --color-text-muted:      #777777;
+  --color-text-faint:      #555555;
+
+  --color-border:          #333333;
+  --color-border-warm:     #2a2520;
+  --color-border-accent:   #1e3050;
+
+  --color-brand:           #2a5080;
+  --color-brand-hover:     #3a6090;
+
+  --color-note-bg:         #2a2510;
+  --color-note-border:     #4a4010;
+  --color-mark-bg:         rgba(255, 243, 160, 0.25);
+
+  --color-title:           #c8d8e8;
+  --color-today-bg:        linear-gradient(135deg, #0a1a2e 0%, #112035 100%);
+}
+
+/* ── Sepia theme ─────────────────────────────────────────────────────── */
+[data-theme="sepia"] {
+  --color-bg-page:         #f0e6cf;
+  --color-bg-surface:      #f8f0e0;
+  --color-bg-surface-alt:  #ede0c8;
+  --color-bg-hover:        #e8d8bc;
+  --color-bg-accent:       #e8dccc;
+
+  --color-text-primary:    #3d2b1f;
+  --color-text-secondary:  #5c4030;
+  --color-text-muted:      #8c6840;
+  --color-text-faint:      #b09060;
+
+  --color-border:          #c8b090;
+  --color-border-warm:     #d0b888;
+  --color-border-accent:   #c0a870;
+
+  --color-note-bg:         #f5e8c0;
+  --color-note-border:     #d4b878;
+  --color-mark-bg:         rgba(200, 160, 60, 0.35);
+
+  --color-title:           #3d2b1f;
+  --color-today-bg:        linear-gradient(135deg, #0f2744 0%, #1a3a5c 100%);
+}
+
+/* ── Font size scaling (changes root font-size; all rem units scale) ── */
+[data-fontsize="sm"] { font-size: 14px; }
+[data-fontsize="md"] { font-size: 16px; }
+[data-fontsize="lg"] { font-size: 18px; }
+[data-fontsize="xl"] { font-size: 20px; }
+
+/* ── Base reset / body ───────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  background: var(--color-bg-page);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.2s, color 0.2s;
+}

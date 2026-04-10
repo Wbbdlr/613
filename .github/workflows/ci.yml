@@ -79,19 +79,30 @@ jobs:
       - name: Wait for sefaria-service health
         run: |
           timeout 120 bash -c \
-            'until curl -sf http://localhost/api/sefaria/health; do echo "waiting…"; sleep 3; done'
+            'until curl -sf http://localhost:8613/api/sefaria/health; do echo "waiting…"; sleep 3; done'
 
       - name: Smoke-test sefaria endpoints
         run: |
-          curl -sf "http://localhost/api/sefaria/health" | grep -q '"status":"ok"'
-          curl -sf "http://localhost/api/sefaria/texts/books" | grep -q '"books"'
-          curl -sf "http://localhost/api/sefaria/notes?ref=Genesis+1:1" | grep -q '\[\|\]'
-          curl -sf "http://localhost/api/sefaria/notes/bookmarks" | grep -q '\[\|\]'
-          curl -sf "http://localhost/api/sefaria/search?q=test" | grep -q '"hits"'
+          curl -sf "http://localhost:8613/api/sefaria/health" | grep -q '"status":"ok"'
+          curl -sf "http://localhost:8613/api/sefaria/texts/books" | grep -q '"books"'
+
+      - name: Smoke-test auth endpoints
+        run: |
+          curl -sf -X POST "http://localhost:8613/api/sefaria/auth/register" \
+            -H "Content-Type: application/json" \
+            -d '{"username":"testuser","password":"testpass1"}' | grep -q '"token"'
+          TOKEN=$(curl -sf -X POST "http://localhost:8613/api/sefaria/auth/login" \
+            -H "Content-Type: application/json" \
+            -d '{"username":"testuser","password":"testpass1"}' | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+          curl -sf "http://localhost:8613/api/sefaria/notes?ref=Genesis+1:1" \
+            -H "Authorization: Bearer $TOKEN" | grep -q '\[\|\]'
+          curl -sf "http://localhost:8613/api/sefaria/notes/bookmarks" \
+            -H "Authorization: Bearer $TOKEN" | grep -q '\[\|\]'
+          curl -sf "http://localhost:8613/api/sefaria/search?q=test" | grep -q '"hits"'
 
       - name: Smoke-test frontend
         run: |
-          curl -sf http://localhost/ | grep -qi '613'
+          curl -sf http://localhost:8613/ | grep -qi '613'
 
       - name: Print service logs on failure
         if: failure()

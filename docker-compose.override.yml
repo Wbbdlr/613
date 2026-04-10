@@ -1,10 +1,20 @@
-version: "3.9"
-
-# Development overrides – bind-mount source for hot reload
+# Development overrides – build locally with bind-mount source for hot reload
 services:
+  proxy:
+    ports:
+      - "${HTTP_PORT:-8613}:8613"
+    # Override inline config with local file for easy Caddyfile editing during dev
+    configs: []
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+
   frontend:
     build:
+      context: ./frontend
       target: dev
+    image: ""
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -14,6 +24,9 @@ services:
       - "3000:3000"
 
   hebcal-service:
+    build:
+      context: ./hebcal-service
+    image: ""
     volumes:
       - ./hebcal-service:/app
       - /app/node_modules
@@ -24,11 +37,16 @@ services:
     command: ["node", "--watch", "src/index.js"]
 
   sefaria-service:
+    build:
+      context: ./sefaria-service
+    image: ""
     volumes:
       - ./sefaria-service:/app
       - /app/node_modules
+      - ./sefaria-data:/data/sefaria
     environment:
       - NODE_ENV=development
+      - JWT_SECRET=${JWT_SECRET:-dev-secret}
     ports:
       - "3002:3002"
     command: ["node", "--watch", "src/index.js"]
