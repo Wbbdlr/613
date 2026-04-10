@@ -27,10 +27,8 @@ router.get('/events', (req, res) => {
     year,
     month,
     isHebrewYear: false,
-    candlelighting: true,
     il,
-    mask: flags.HOLIDAYS | flags.MINOR_FAST | flags.ROSH_CHODESH |
-          flags.PARSHA_HASHAVUA | flags.LIGHT_CANDLES | flags.YOM_TOV_ENDS,
+    mask: flags.HOLIDAYS | flags.MINOR_FAST | flags.ROSH_CHODESH | flags.PARSHA_HASHAVUA,
   };
 
   const events = HebrewCalendar.calendar(options).map(ev => ({
