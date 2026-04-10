@@ -1,0 +1,44 @@
+version: "3.9"
+
+# Development overrides – bind-mount source for hot reload
+services:
+  frontend:
+    build:
+      target: dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+
+  hebcal-service:
+    volumes:
+      - ./hebcal-service:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "3001:3001"
+    command: ["node", "--watch", "src/index.js"]
+
+  sefaria-service:
+    volumes:
+      - ./sefaria-service:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "3002:3002"
+    command: ["node", "--watch", "src/index.js"]
+
+  db:
+    ports:
+      - "5432:5432"
+
+  meilisearch:
+    environment:
+      - MEILI_ENV=development
+    ports:
+      - "7700:7700"

@@ -1,0 +1,20 @@
+{
+  "name": "hebcal-service",
+  "version": "1.0.0",
+  "description": "Hebcal REST API + PDF export for 613 suite",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@hebcal/core": "^5.8.0",
+    "@hebcal/geo-sqlite": "^4.3.0",
+    "@hebcal/noaa": "^3.3.0",
+    "@hebcal/learning": "^2.4.0",
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "pdfkit": "^0.15.0"
+  }
+}

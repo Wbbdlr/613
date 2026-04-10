@@ -1,0 +1,19 @@
+{
+  "name": "sefaria-service",
+  "version": "1.0.0",
+  "description": "Sefaria text API + search for 613 suite",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "express-rate-limit": "^7.3.1",
+    "pg": "^8.11.5",
+    "meilisearch": "^0.39.0",
+    "glob": "^10.3.10"
+  }
+}

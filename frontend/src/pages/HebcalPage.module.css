@@ -1,0 +1,120 @@
+.page { }
+
+.title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+  color: #1a3a5c;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 0.5rem;
+}
+
+.tab, .tabActive {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+
+.tabActive {
+  background: #1a3a5c;
+  color: white;
+  border-color: #1a3a5c;
+}
+
+.panel {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.2rem;
+}
+
+.controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.controls input, .controls select {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.9rem;
+}
+
+.controls input[type="number"] { width: 80px; }
+.controls input[type="date"] { width: 140px; }
+
+.controls button {
+  padding: 0.4rem 1rem;
+  background: #1a3a5c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.controls button:hover { background: #254e7d; }
+.controls button:disabled { opacity: 0.6; cursor: default; }
+
+.pdfBtn {
+  background: #8b1a1a !important;
+}
+.pdfBtn:hover { background: #a82020 !important; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.table th, .table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.table th {
+  background: #f0f4f8;
+  font-weight: 600;
+}
+
+.table tr:hover td { background: #fafafa; }
+
+.card {
+  padding: 1.5rem;
+  background: #f0f4f8;
+  border-radius: 8px;
+  line-height: 1.8;
+}
+
+.card h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+  color: #1a3a5c;
+}
+
+.error {
+  color: #8b1a1a;
+  margin-top: 0.5rem;
+}

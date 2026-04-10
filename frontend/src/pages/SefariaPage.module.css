@@ -1,0 +1,243 @@
+.page {}
+
+.title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+  color: #1a3a5c;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 0.5rem;
+}
+
+.tab, .tabActive {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.tabActive {
+  background: #1a3a5c;
+  color: white;
+  border-color: #1a3a5c;
+}
+
+.panel {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+/* Search */
+.searchForm {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.searchForm button {
+  padding: 0.5rem 1.2rem;
+  background: #1a3a5c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.resultCount {
+  color: #555;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.hit {
+  padding: 0.75rem;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
+.hit:hover { background: #f5f9ff; }
+
+.hit mark {
+  background: #fff3a0;
+}
+
+/* Browse */
+.browseLayout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 1.5rem;
+  min-height: 400px;
+}
+
+.bookList {
+  border-right: 1px solid #eee;
+  padding-right: 1rem;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.bookList h3 { margin-bottom: 0.5rem; color: #1a3a5c; }
+
+.bookItem, .bookItemActive {
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  margin-bottom: 2px;
+}
+
+.bookItem:hover { background: #f0f4f8; }
+.bookItemActive { background: #1a3a5c; color: white; }
+
+.chapterList h3 { margin-bottom: 0.25rem; color: #1a3a5c; }
+
+.chapterGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.chapterBtn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.chapterBtn:hover { background: #e8f0fb; }
+
+/* Read */
+.readLayout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 1.5rem;
+  min-height: 400px;
+}
+
+.textArea h2 {
+  margin-bottom: 1rem;
+  color: #1a3a5c;
+}
+
+.verse {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  margin-bottom: 0.5rem;
+}
+
+.verse:hover { background: #f5f9ff; }
+.verseSelected { background: #e8f0fb !important; border-left-color: #1a3a5c; }
+
+.verseNum {
+  color: #888;
+  font-size: 0.8rem;
+  min-width: 1.5rem;
+  padding-top: 0.15rem;
+}
+
+.enText { font-size: 0.95rem; line-height: 1.65; }
+.heText {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: #333;
+  margin-top: 0.3rem;
+  font-family: "Times New Roman", serif;
+}
+
+/* Notes panel */
+.notesPanel {
+  border-left: 1px solid #eee;
+  padding-left: 1rem;
+}
+
+.notesPanel h3 { margin-bottom: 0.75rem; color: #1a3a5c; }
+
+.noteRef {
+  font-size: 0.8rem;
+  color: #555;
+  margin-bottom: 0.75rem;
+}
+
+.noteItem {
+  background: #fffde7;
+  border: 1px solid #f0e68c;
+  border-radius: 4px;
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.noteItem button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  padding: 0;
+  line-height: 1;
+}
+
+.noteInput {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.875rem;
+  resize: vertical;
+  margin-bottom: 0.5rem;
+}
+
+.saveBtn {
+  width: 100%;
+  padding: 0.4rem;
+  background: #1a3a5c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.hint {
+  color: #888;
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+.error { color: #8b1a1a; }
+
+@media (max-width: 700px) {
+  .browseLayout { grid-template-columns: 1fr; }
+  .readLayout { grid-template-columns: 1fr; }
+}
