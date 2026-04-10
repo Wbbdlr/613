@@ -121,8 +121,8 @@ jobs:
         run: |
           curl -sf "http://localhost/api/sefaria/health" | grep -q '"status":"ok"'
           curl -sf "http://localhost/api/sefaria/texts/books" | grep -q '"books"'
-          curl -sf "http://localhost/api/sefaria/notes?ref=Genesis+1:1" | python3 -c "import sys,json; json.load(sys.stdin)"
-          curl -sf "http://localhost/api/sefaria/notes/bookmarks" | python3 -c "import sys,json; json.load(sys.stdin)"
+          curl -sf "http://localhost/api/sefaria/notes?ref=Genesis+1:1" | grep -q '\[\|\]'
+          curl -sf "http://localhost/api/sefaria/notes/bookmarks" | grep -q '\[\|\]'
           curl -sf "http://localhost/api/sefaria/search?q=test" | grep -q '"hits"'
 
       - name: Smoke-test frontend

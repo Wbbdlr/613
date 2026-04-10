@@ -182,6 +182,7 @@ function ZmanimPanel() {
   const [city, setCity] = useState('');
   const [lat, setLat] = useState('');
   const [lon, setLon] = useState('');
+  const [tzid, setTzid] = useState('America/New_York');
   const [date, setDate] = useState(today());
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -191,10 +192,32 @@ function ZmanimPanel() {
     try {
       let url = `${API}/zmanim?date=${date}`;
       if (city) url += `&city=${encodeURIComponent(city)}`;
-      else if (lat && lon) url += `&lat=${lat}&lon=${lon}&tzid=UTC`;
+      else if (lat && lon) url += `&lat=${lat}&lon=${lon}&tzid=${encodeURIComponent(tzid)}`;
       const r = await fetch(url);
       setData(await r.json());
     } finally { setLoading(false); }
+  };
+
+  const downloadPdf = async () => {
+    if (!data) return;
+    const r = await fetch(`${API}/pdf/zmanim`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lat: data.lat,
+        lon: data.lon,
+        tzid: data.tzid,
+        date: data.date,
+        days: 7,
+      }),
+    });
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `zmanim-${data.date}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const LABELS = {
@@ -232,10 +255,17 @@ function ZmanimPanel() {
           <input placeholder="-73.94" value={lon} onChange={e=>setLon(e.target.value)} style={{width:90}} />
         </label>
         <label className={styles.field}>
+          <span className={styles.fieldLabel}>Timezone</span>
+          <input placeholder="America/New_York" value={tzid} onChange={e=>setTzid(e.target.value)} style={{width:170}} />
+        </label>
+        <label className={styles.field}>
           <span className={styles.fieldLabel}>Date</span>
           <input type="date" value={date} onChange={e=>setDate(e.target.value)} />
         </label>
         <button className={styles.btn} onClick={load} disabled={loading}>{loading ? <Spinner /> : 'Show'}</button>
+        {data && !data.error && (
+          <button onClick={downloadPdf} className={`${styles.btn} ${styles.btnSecondary}`} aria-label="Download Zmanim PDF">⬇ PDF</button>
+        )}
       </div>
       {data && !data.error && (
         <div className={styles.tableWrap}>

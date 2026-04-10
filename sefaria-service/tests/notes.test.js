@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 let pgContainer;
 let server;
 let baseUrl;
-let pool;  // saved so after() can drain connections before stopping the container
+let dbPool;  // saved so after() can drain connections before stopping the container
 
 describe('sefaria-service notes API', { timeout: 120_000 }, () => {
   before(async () => {
@@ -31,12 +31,12 @@ describe('sefaria-service notes API', { timeout: 120_000 }, () => {
 
     // Apply DB schema
     const dbModule = await import('../src/db.js');
-    pool = dbModule.pool;
+    dbPool = dbModule.pool;
     const initSql = await fs.readFile(
       path.join(__dirname, '../../db/init.sql'),
       'utf8'
     );
-    await pool.query(initSql);
+    await dbPool.query(initSql);
 
     // Start the Express app in-process
     const { default: app } = await import('../src/app.js');
@@ -48,7 +48,7 @@ describe('sefaria-service notes API', { timeout: 120_000 }, () => {
 
   after(async () => {
     await new Promise((resolve) => server?.close(resolve));
-    await pool?.end();
+    await dbPool?.end();
     await pgContainer?.stop();
   });
 
