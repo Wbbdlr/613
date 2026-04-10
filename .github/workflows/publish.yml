@@ -20,6 +20,9 @@ jobs:
             context: ./frontend
             build-args: "target=runner"
             target: runner
+          - service: db
+            context: ./db
+            target: ""
           - service: hebcal-service
             context: ./hebcal-service
             target: ""

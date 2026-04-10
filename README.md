@@ -54,7 +54,7 @@ Set `GIT_REF` if you want to pin a tag or branch, for example `GIT_REF=v1.0.1`. 
 
 [Dockge](https://github.com/louislam/dockge) can deploy this stack directly from a single pasted compose file. The production stack no longer depends on external config files; it writes the Caddy config and Postgres init SQL inside the containers at startup.
 
-For public Dockge deployments, the GHCR packages must be publicly readable. After the first publish, set each package to **Public** in GitHub Packages if they are not already public: `613-frontend`, `613-hebcal-service`, and `613-sefaria-service`.
+For public Dockge deployments, the GHCR packages must be publicly readable. After the first publish, set each package to **Public** in GitHub Packages if they are not already public: `613-frontend`, `613-db`, `613-hebcal-service`, and `613-sefaria-service`.
 
 1. In Dockge, paste [docker-compose.yml](/workspaces/613/docker-compose.yml) as the stack definition.
 2. Add an `.env` only if you want to override defaults, especially `MEILI_MASTER_KEY`, `JWT_SECRET`, or `IMAGE_TAG`.

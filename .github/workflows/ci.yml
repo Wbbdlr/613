@@ -40,6 +40,16 @@ jobs:
           cache-from: type=gha,scope=hebcal
           cache-to: type=gha,mode=max,scope=hebcal
 
+      - name: Build db image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./db
+          push: false
+          load: true
+          tags: 613-db:ci
+          cache-from: type=gha,scope=db
+          cache-to: type=gha,mode=max,scope=db
+
       - name: Build sefaria-service
         uses: docker/build-push-action@v6
         with:
@@ -109,6 +119,14 @@ jobs:
           push: false
           load: true
           tags: ghcr.io/wbbdlr/613-hebcal-service:stable
+
+      - name: Build db image for production compose
+        uses: docker/build-push-action@v6
+        with:
+          context: ./db
+          push: false
+          load: true
+          tags: ghcr.io/wbbdlr/613-db:stable
 
       - name: Build sefaria-service image for production compose
         uses: docker/build-push-action@v6
