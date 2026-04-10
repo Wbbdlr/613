@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   proxy:
     image: caddy:2-alpine
@@ -13,6 +11,7 @@ services:
       - caddy_config:/config
     depends_on:
       - frontend
+      - hebcal-service
       - sefaria-service
 
   frontend:
@@ -24,6 +23,16 @@ services:
       - NODE_ENV=production
     expose:
       - "3000"
+
+  hebcal-service:
+    build:
+      context: ./hebcal-service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    expose:
+      - "3001"
 
   sefaria-service:
     build:

@@ -11,6 +11,12 @@
         reverse_proxy frontend:3000
     }
 
+    # Hebcal API
+    handle /api/hebcal/* {
+        uri strip_prefix /api/hebcal
+        reverse_proxy hebcal-service:3001
+    }
+
     # Sefaria API
     handle /api/sefaria/* {
         uri strip_prefix /api/sefaria
