@@ -16,6 +16,9 @@ services:
       - sefaria-service
 
   frontend:
+    build:
+      context: ./frontend
+      target: runner
     image: ghcr.io/wbbdlr/613-frontend:latest
     restart: unless-stopped
     environment:
@@ -24,6 +27,8 @@ services:
       - "3000"
 
   hebcal-service:
+    build:
+      context: ./hebcal-service
     image: ghcr.io/wbbdlr/613-hebcal-service:latest
     restart: unless-stopped
     environment:
@@ -33,6 +38,8 @@ services:
       - "3001"
 
   sefaria-service:
+    build:
+      context: ./sefaria-service
     image: ghcr.io/wbbdlr/613-sefaria-service:latest
     restart: unless-stopped
     environment:
