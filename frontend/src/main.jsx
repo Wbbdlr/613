@@ -12,6 +12,9 @@ import '@fontsource/frank-ruhl-libre/400.css';
 import '@fontsource/frank-ruhl-libre/500.css';
 import '@fontsource/frank-ruhl-libre/700.css';
 
+// Global print styles for window.print() / Save as PDF
+import './print.css';
+
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <App />

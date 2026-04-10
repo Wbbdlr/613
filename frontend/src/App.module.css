@@ -99,6 +99,17 @@
   margin: 0 auto;
 }
 
+/* ── Offline Banner ── */
+.offlineBanner {
+  background: #7a3030;
+  color: #fff;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.45rem 1rem;
+  letter-spacing: 0.02em;
+}
+
 /* ── Footer ── */
 .footer {
   background: #0f2744;

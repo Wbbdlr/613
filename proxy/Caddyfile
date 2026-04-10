@@ -3,15 +3,12 @@
 }
 
 :{$HTTP_PORT:80} {
-    # Frontend
+    # Service Worker must not be cached by Caddy so browsers always get the latest version
+    header /sw.js Cache-Control "no-cache, no-store, must-revalidate"
+
+    # Frontend (serves built React app including sw.js)
     handle {
         reverse_proxy frontend:3000
-    }
-
-    # Hebcal API
-    handle /api/hebcal/* {
-        uri strip_prefix /api/hebcal
-        reverse_proxy hebcal-service:3001
     }
 
     # Sefaria API
