@@ -1,7 +1,17 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { pool } from '../db.js';
 
 export const router = Router();
+
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.use(limiter);
 
 // GET /notes?ref=Genesis+1:1
 router.get('/', async (req, res) => {
@@ -25,6 +35,9 @@ router.post('/', async (req, res) => {
 // PUT /notes/:id  body: { text }
 router.put('/:id', async (req, res) => {
   const { text } = req.body;
+  if (!text || typeof text !== 'string' || !text.trim()) {
+    return res.status(400).json({ error: 'text is required' });
+  }
   const { rows } = await pool.query(
     'UPDATE notes SET text = $1, updated_at = now() WHERE id = $2 RETURNING *',
     [text, req.params.id]

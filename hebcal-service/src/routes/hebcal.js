@@ -97,7 +97,6 @@ router.get('/dafyomi', (req, res) => {
   res.json({
     date: dateStr,
     tractate: daf.name,
-    tractateHe: daf.blatt ? undefined : undefined,
     daf: daf.blatt,
     display: daf.render('en'),
     displayHe: daf.render('he'),

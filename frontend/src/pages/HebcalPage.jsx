@@ -77,7 +77,7 @@ function CalendarPanel() {
   return (
     <div>
       <div className={styles.controls}>
-        <label>Year <input type="number" value={year} onChange={e => setYear(e.target.value)} /></label>
+        <label>Year <input type="number" value={year} onChange={e => setYear(Number(e.target.value))} /></label>
         <label>Month
           <select value={month} onChange={e => setMonth(Number(e.target.value))}>
             {Array.from({length:12},(_,i)=>(
@@ -273,7 +273,7 @@ function HolidaysPanel() {
   return (
     <div>
       <div className={styles.controls}>
-        <label>Year <input type="number" value={year} onChange={e=>setYear(e.target.value)} /></label>
+        <label>Year <input type="number" value={year} onChange={e=>setYear(Number(e.target.value))} /></label>
         <label><input type="checkbox" checked={il} onChange={e=>setIl(e.target.checked)} /> Israel</label>
         <button onClick={load}>Show</button>
       </div>

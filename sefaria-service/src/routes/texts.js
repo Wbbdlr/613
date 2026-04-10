@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { readTextFile, listBooks, getBook } from '../textStore.js';
-import { pool } from '../db.js';
 
 export const router = Router();
 

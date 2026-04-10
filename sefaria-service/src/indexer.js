@@ -52,7 +52,7 @@ export async function indexAllTexts() {
         });
 
         if (batch.length >= BATCH_SIZE) {
-          index.addDocuments(batch).catch(console.error);
+          await index.addDocuments(batch);
           total += batch.length;
           batch = [];
         }

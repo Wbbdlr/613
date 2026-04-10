@@ -168,6 +168,7 @@ function ReadPanel({ ref_ }) {
     loadNotes();
   };
 
+  if (!parts) return <p className={styles.error}>Invalid reference: {ref_}</p>;
   if (!data) return <p>Loading {ref_}…</p>;
   if (data.error) return <p className={styles.error}>{data.error}</p>;
 
