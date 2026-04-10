@@ -8,10 +8,12 @@ services:
       - NODE_ENV=development
       - APP_DATA_DIR=/data
       - SEFARIA_DATA_DIR=/data/sefaria
+      - SEFARIA_SOURCE_DIR=/app/vendor/sefaria
       - JWT_SECRET=${JWT_SECRET:-dev-secret}
     volumes:
       - ./app/src:/app/src
       - ./hebcal-service/src:/app/hebcal-service/src
+      - ./vendor:/app/vendor
       - ./sefaria-data:/data/sefaria
       - app_dev_data:/data
 

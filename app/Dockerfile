@@ -15,6 +15,7 @@ RUN npm install --omit=dev
 COPY app/src ./src
 COPY hebcal-service/src ./hebcal-service/src
 COPY sefaria-service/src/textStore.js ./legacy/textStore.js
+COPY vendor ./vendor
 COPY --from=frontend-build /src/frontend/dist ./public
 
 ENV PORT=8613

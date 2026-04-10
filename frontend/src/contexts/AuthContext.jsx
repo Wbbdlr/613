@@ -2,6 +2,10 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 
 const AuthContext = createContext(null);
 
+function persistUser(userData) {
+  localStorage.setItem('613_auth', JSON.stringify(userData));
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
@@ -11,8 +15,20 @@ export function AuthProvider({ children }) {
   });
 
   const login = useCallback((userData) => {
-    localStorage.setItem('613_auth', JSON.stringify(userData));
+    persistUser(userData);
     setUser(userData);
+  }, []);
+
+  const updateUser = useCallback((patch) => {
+    setUser((current) => {
+      if (!current) return current;
+      const next = { ...current, ...patch };
+      if (patch.settings) {
+        next.settings = { ...(current.settings || {}), ...patch.settings };
+      }
+      persistUser(next);
+      return next;
+    });
   }, []);
 
   const logout = useCallback(() => {
@@ -21,7 +37,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, updateUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

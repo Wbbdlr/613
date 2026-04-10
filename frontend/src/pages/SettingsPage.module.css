@@ -1,0 +1,148 @@
+.page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-title);
+  margin: 0;
+}
+
+.section {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+
+.sectionTitle {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+  color: var(--color-title);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.field span {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.field select {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface-alt);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  color: var(--color-text-primary);
+}
+
+.helper {
+  color: var(--color-text-secondary);
+  font-size: 0.88rem;
+  margin: 0.75rem 0 0;
+}
+
+.message {
+  color: var(--color-brand);
+  font-size: 0.88rem;
+  margin: 0.75rem 0 0;
+}
+
+.adminCard,
+.userAdmin {
+  border: 1px solid var(--color-border-warm);
+  border-radius: 10px;
+  background: var(--color-bg-surface-alt);
+  padding: 1rem;
+}
+
+.adminCard {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+
+.adminTitle {
+  font-weight: 700;
+  color: var(--color-title);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.primaryBtn,
+.secondaryBtn,
+.dangerBtn {
+  border-radius: 8px;
+  padding: 0.6rem 0.85rem;
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.primaryBtn {
+  background: var(--color-brand);
+  color: white;
+}
+
+.secondaryBtn {
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+}
+
+.dangerBtn {
+  background: #7a3030;
+  color: white;
+}
+
+.userList {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+}
+
+.userRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.userName {
+  font-weight: 600;
+}
+
+.userMeta {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 720px) {
+  .adminCard,
+  .userRow {
+    flex-direction: column;
+  }
+}

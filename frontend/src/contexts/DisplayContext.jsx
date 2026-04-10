@@ -15,12 +15,21 @@ export const FONT_SIZES = [
   { id: 'xl', label: 'A',  title: 'X-Large'},
 ];
 
+export const READER_LANGUAGES = [
+  { id: 'english', label: 'English only' },
+  { id: 'hebrew', label: 'Hebrew only' },
+  { id: 'bilingual', label: 'Bilingual' },
+];
+
 export function DisplayProvider({ children }) {
   const [theme, setThemeState] = useState(
     () => localStorage.getItem('613_theme') || 'light'
   );
   const [fontSize, setFontSizeState] = useState(
     () => localStorage.getItem('613_fontsize') || 'md'
+  );
+  const [readerLanguage, setReaderLanguageState] = useState(
+    () => localStorage.getItem('613_reader_language') || 'bilingual'
   );
 
   useEffect(() => {
@@ -38,11 +47,16 @@ export function DisplayProvider({ children }) {
     localStorage.setItem('613_fontsize', fontSize);
   }, [fontSize]);
 
+  useEffect(() => {
+    localStorage.setItem('613_reader_language', readerLanguage);
+  }, [readerLanguage]);
+
   const setTheme = (t) => setThemeState(t);
   const setFontSize = (s) => setFontSizeState(s);
+  const setReaderLanguage = (value) => setReaderLanguageState(value);
 
   return (
-    <DisplayContext.Provider value={{ theme, setTheme, fontSize, setFontSize }}>
+    <DisplayContext.Provider value={{ theme, setTheme, fontSize, setFontSize, readerLanguage, setReaderLanguage }}>
       {children}
     </DisplayContext.Provider>
   );

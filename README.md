@@ -5,6 +5,8 @@ A fully self-hosted Docker Compose stack providing:
 - **Hebcal Tools** – Jewish calendar, Zmanim, Parsha, Daf Yomi, Nach Yomi, Holidays + PDF export
 - **Sefaria Reader** – Browse, search, read, highlight, and annotate Jewish texts locally (no reliance on sefaria.org)
 
+No runtime calls are made to hebcal.com, sefaria.org, or any other third-party API. The app serves Hebcal functionality from local code in this repo and expects Sefaria texts to be vendored into this repo as local files.
+
 ## Quick Start
 
 ### Prerequisites
@@ -30,6 +32,20 @@ The stack publishes the app on **http://SERVER_IP:8613** by default, or whatever
 The compose files default the project name to `613-home`, but Dockge may still show container and volume names based on the stack name you choose in its UI.
 The production deployment now runs as a single `app` container with one persistent data volume.
 The main [docker-compose.yml](/workspaces/613/docker-compose.yml) builds directly from GitHub by default, so pasted-YAML deployments work without a local repo checkout.
+The container now reads Sefaria seed data only from the vendored path [vendor/sefaria/README.md](/workspaces/613/vendor/sefaria/README.md).
+
+### First User Setup
+
+After the app starts, open the login page and choose **Create Account**. There is no separate admin bootstrap step for the first user. Accounts are self-registered in the UI and the same flow is used for all later users.
+
+Basic first-run sequence:
+
+1. Open the app at `http://SERVER_IP:8613`.
+2. Click **Create Account**.
+3. Enter a username and a password of at least 8 characters.
+4. The first account created is automatically granted admin access.
+5. Open **Settings** after signing in to adjust theme, text size, and reader language.
+6. If you want local Sefaria text browsing and search, place a vendored Sefaria export under [vendor/sefaria/README.md](/workspaces/613/vendor/sefaria/README.md), then use the admin controls in **Settings** or on the empty Sefaria page to import the library.
 
 ### Default Deployment Model
 
@@ -67,11 +83,34 @@ The recommended path is:
 
 Add an `.env` only if you want to override defaults, especially `JWT_SECRET`, `HTTP_PORT`, or `GIT_REF`.
 
+### Optional Build Speedup
+
+If your Docker environment supports it, you can enable Docker Bake for faster builds by setting `COMPOSE_BAKE=true` in the environment where Compose runs. This is optional and only affects build performance; it does not change app behavior or deployment semantics.
+
+Use it when:
+
+1. You are rebuilding often.
+2. Your Docker host has modern BuildKit support.
+3. You want better caching and parallel build planning.
+
+Do not treat it as required application configuration. It is an operator-side Docker optimization, not part of the app itself.
+
 If your Dockge stack is repo-backed and you want builds to use the local checkout instead of GitHub as the build context, use [docker-compose.repo-build.yml](/workspaces/613/docker-compose.repo-build.yml) instead.
 
 > The GHCR publish workflow is optional now. It is no longer required for normal self-hosted deployment.
 
-### 3. Seed Sefaria data (one-time, ~2 GB download)
+### 3. Import Sefaria data (one-time, ~2 GB local copy)
+
+The normal path is now fully in-app:
+
+1. Vendor the Sefaria text export into [vendor/sefaria/README.md](/workspaces/613/vendor/sefaria/README.md).
+1. Sign in with the first account you created.
+2. Open **Settings**.
+3. In the **Admin** section, click **Import Library**.
+
+The copy and indexing job runs in the background. Depending on your hardware and storage, the initial import can take 10–30 minutes.
+
+If you prefer a host-side fallback, you can still use the helper script below to populate the Docker volume directly.
 
 ```bash
 # Make sure the stack is running first
@@ -79,7 +118,7 @@ chmod +x scripts/seed-sefaria.sh
 ./scripts/seed-sefaria.sh
 ```
 
-This downloads the [Sefaria-Export](https://github.com/Sefaria-Project/Sefaria-Export) dataset into the app volume and triggers local SQLite search indexing. Indexing runs in the background and may take 10–30 minutes depending on your hardware.
+This copies the vendored Sefaria dataset from this repo into the app volume. After a manual copy, sign in as an admin and use **Reimport** in **Settings** if you want to rebuild the local search index.
 
 ## Services
 
@@ -120,6 +159,13 @@ This downloads the [Sefaria-Export](https://github.com/Sefaria-Project/Sefaria-E
 | `/notes/highlights` | POST | Add a highlight |
 | `/notes/bookmarks` | GET | All bookmarks |
 | `/notes/bookmarks` | POST | Add a bookmark |
+| `/settings` | GET | Read the signed-in user's saved settings |
+| `/settings` | PUT | Save theme, font size, and reader language |
+| `/admin/import` | POST | Copy and import the vendored Sefaria library |
+| `/admin/import/status` | GET | View current import/index status |
+| `/admin/users` | GET | List users and roles |
+| `/admin/users/:id` | PUT | Change a user's admin role |
+| `/admin/users/:id` | DELETE | Delete a user |
 | `/admin/reindex` | POST | Trigger Sefaria data reindex |
 
 ## Development

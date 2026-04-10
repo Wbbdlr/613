@@ -3,9 +3,10 @@ import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
-import { createUser, findUserByUsername, listNotes, addNote, editNote, removeNote, listHighlights, addHighlight, removeHighlight, listBookmarks, saveBookmark, removeBookmark, searchTexts, getTextCount } from './storage.js';
-import { requireAuth, JWT_SECRET } from './auth.js';
+import { createUser, findUserByUsername, findUserById, listUsers, updateUserAdmin, updateUserSettings, removeUser, listNotes, addNote, editNote, removeNote, listHighlights, addHighlight, removeHighlight, listBookmarks, saveBookmark, removeBookmark, searchTexts, getTextCount } from './storage.js';
+import { requireAuth, requireAdmin, JWT_SECRET } from './auth.js';
 import { indexAllTexts } from './searchIndex.js';
+import { importLibrary, getImportReadiness, getImportStatus } from './importLibrary.js';
 import { readTextFile, listBooks, getBook } from '../../legacy/textStore.js';
 
 const app = express();
@@ -25,7 +26,8 @@ const authLimiter = rateLimit({
 });
 
 function issueToken(userId, username) {
-  return jwt.sign({ userId, username }, JWT_SECRET, { expiresIn: '7d' });
+  const user = findUserById(userId);
+  return jwt.sign({ userId, username, isAdmin: Boolean(user?.isAdmin) }, JWT_SECRET, { expiresIn: '7d' });
 }
 
 app.use('/auth', authLimiter);
@@ -41,7 +43,7 @@ app.post('/auth/register', async (req, res) => {
   try {
     const hash = await bcrypt.hash(password, 12);
     const user = createUser(cleanUsername, hash);
-    res.status(201).json({ token: issueToken(user.id, user.username), username: user.username });
+    res.status(201).json({ token: issueToken(user.id, user.username), username: user.username, isAdmin: user.isAdmin, settings: user.settings });
   } catch (error) {
     if (String(error.message).includes('UNIQUE')) {
       return res.status(409).json({ error: 'Username already taken' });
@@ -59,7 +61,7 @@ app.post('/auth/login', async (req, res) => {
   if (!user || !(await bcrypt.compare(password, user.password_hash))) {
     return res.status(401).json({ error: 'Invalid username or password' });
   }
-  res.json({ token: issueToken(user.id, user.username), username: user.username });
+  res.json({ token: issueToken(user.id, user.username), username: user.username, isAdmin: user.isAdmin, settings: user.settings });
 });
 
 app.get('/auth/me', (req, res) => {
@@ -67,10 +69,30 @@ app.get('/auth/me', (req, res) => {
   if (!header?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const payload = jwt.verify(header.slice(7), JWT_SECRET);
-    res.json({ userId: payload.userId, username: payload.username });
+    const user = findUserById(payload.userId);
+    if (!user) return res.status(401).json({ error: 'Invalid or expired token' });
+    res.json({ userId: user.id, username: user.username, isAdmin: user.isAdmin, settings: user.settings });
   } catch {
     res.status(401).json({ error: 'Invalid or expired token' });
   }
+});
+
+app.get('/settings', requireAuth, (req, res) => {
+  res.json({ settings: req.user.settings, isAdmin: req.user.isAdmin, username: req.user.username });
+});
+
+app.put('/settings', requireAuth, (req, res) => {
+  const { theme, fontSize, readerLanguage } = req.body || {};
+  const validThemes = new Set(['light', 'dark', 'sepia']);
+  const validFontSizes = new Set(['sm', 'md', 'lg', 'xl']);
+  const validLanguages = new Set(['english', 'hebrew', 'bilingual']);
+
+  if (theme && !validThemes.has(theme)) return res.status(400).json({ error: 'Invalid theme' });
+  if (fontSize && !validFontSizes.has(fontSize)) return res.status(400).json({ error: 'Invalid font size' });
+  if (readerLanguage && !validLanguages.has(readerLanguage)) return res.status(400).json({ error: 'Invalid reader language' });
+
+  const user = updateUserSettings(req.userId, { theme, fontSize, readerLanguage });
+  res.json({ settings: user.settings, isAdmin: user.isAdmin, username: user.username });
 });
 
 app.get('/texts/books', async (_req, res) => {
@@ -115,7 +137,7 @@ app.get('/search', (req, res) => {
 });
 
 let indexing = false;
-app.post('/admin/reindex', async (_req, res) => {
+app.post('/admin/reindex', requireAuth, requireAdmin, async (_req, res) => {
   if (indexing) return res.json({ status: 'already_running' });
   indexing = true;
   res.json({ status: 'started' });
@@ -127,8 +149,59 @@ app.post('/admin/reindex', async (_req, res) => {
   });
 });
 
-app.get('/admin/reindex/status', (_req, res) => {
+app.get('/admin/reindex/status', requireAuth, requireAdmin, (_req, res) => {
   res.json({ indexing, indexed: getTextCount() });
+});
+
+app.get('/admin/import/status', requireAuth, requireAdmin, async (_req, res) => {
+  res.json({ ...getImportStatus(), ...(await getImportReadiness()), indexed: getTextCount() });
+});
+
+app.post('/admin/import', requireAuth, requireAdmin, async (req, res) => {
+  if (getImportStatus().running) {
+    return res.json(getImportStatus());
+  }
+  const readiness = await getImportReadiness();
+  if (!readiness.sourceReady) {
+    return res.status(409).json({ error: readiness.sourceError, sourcePath: readiness.sourcePath });
+  }
+  const force = Boolean(req.body?.force);
+  res.json({ status: 'started', force, sourcePath: readiness.sourcePath });
+  importLibrary({ force }).catch((error) => {
+    console.error('Library import failed:', error);
+  });
+});
+
+app.get('/admin/users', requireAuth, requireAdmin, (_req, res) => {
+  res.json({ users: listUsers() });
+});
+
+app.put('/admin/users/:id', requireAuth, requireAdmin, (req, res) => {
+  const { isAdmin } = req.body || {};
+  if (typeof isAdmin !== 'boolean') {
+    return res.status(400).json({ error: 'isAdmin boolean required' });
+  }
+  const users = listUsers();
+  const target = users.find((user) => String(user.id) === String(req.params.id));
+  if (!target) return res.status(404).json({ error: 'User not found' });
+  if (!isAdmin && target.isAdmin) {
+    const adminCount = users.filter((user) => user.isAdmin).length;
+    if (adminCount <= 1) {
+      return res.status(400).json({ error: 'At least one admin is required' });
+    }
+  }
+  res.json({ user: updateUserAdmin(req.params.id, isAdmin) });
+});
+
+app.delete('/admin/users/:id', requireAuth, requireAdmin, (req, res) => {
+  const users = listUsers();
+  const target = users.find((user) => String(user.id) === String(req.params.id));
+  if (!target) return res.status(404).json({ error: 'User not found' });
+  if (target.isAdmin && users.filter((user) => user.isAdmin).length <= 1) {
+    return res.status(400).json({ error: 'At least one admin is required' });
+  }
+  removeUser(req.params.id);
+  res.status(204).end();
 });
 
 app.use('/notes', requireAuth);

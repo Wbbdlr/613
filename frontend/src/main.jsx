@@ -22,10 +22,10 @@ import './print.css';
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
-    <DisplayProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <DisplayProvider>
         <App />
-      </AuthProvider>
-    </DisplayProvider>
+      </DisplayProvider>
+    </AuthProvider>
   </BrowserRouter>
 );

@@ -16,6 +16,8 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
+    is_admin INTEGER NOT NULL DEFAULT 0,
+    settings_json TEXT NOT NULL DEFAULT '{}',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -81,9 +83,42 @@ db.exec(`
   );
 `);
 
+const userColumns = db.prepare('PRAGMA table_info(users)').all();
+const hasColumn = (name) => userColumns.some((column) => column.name === name);
+if (!hasColumn('is_admin')) {
+  db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0');
+}
+if (!hasColumn('settings_json')) {
+  db.exec("ALTER TABLE users ADD COLUMN settings_json TEXT NOT NULL DEFAULT '{}'");
+}
+
+function mapUser(row) {
+  if (!row) return null;
+  let settings = {};
+  try {
+    settings = row.settings_json ? JSON.parse(row.settings_json) : {};
+  } catch {
+    settings = {};
+  }
+  return {
+    id: row.id,
+    username: row.username,
+    password_hash: row.password_hash,
+    isAdmin: Boolean(row.is_admin),
+    settings,
+    created_at: row.created_at,
+  };
+}
+
 const statements = {
-  createUser: db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?) RETURNING id, username'),
-  findUserByUsername: db.prepare('SELECT id, username, password_hash FROM users WHERE username = ?'),
+  createUser: db.prepare('INSERT INTO users (username, password_hash, is_admin, settings_json) VALUES (?, ?, ?, ?) RETURNING *'),
+  findUserByUsername: db.prepare('SELECT * FROM users WHERE username = ?'),
+  findUserById: db.prepare('SELECT * FROM users WHERE id = ?'),
+  countUsers: db.prepare('SELECT COUNT(*) AS count FROM users'),
+  listUsers: db.prepare('SELECT id, username, is_admin, created_at FROM users ORDER BY created_at ASC, id ASC'),
+  updateUserSettings: db.prepare('UPDATE users SET settings_json = ? WHERE id = ? RETURNING *'),
+  updateUserAdmin: db.prepare('UPDATE users SET is_admin = ? WHERE id = ? RETURNING id, username, is_admin, created_at'),
+  deleteUser: db.prepare('DELETE FROM users WHERE id = ?'),
 
   getNotes: db.prepare('SELECT * FROM notes WHERE user_id = ? AND ref = ? ORDER BY created_at'),
   createNote: db.prepare('INSERT INTO notes (user_id, ref, text) VALUES (?, ?, ?) RETURNING *'),
@@ -131,11 +166,56 @@ const countSearchStatement = db.prepare(`
 `);
 
 export function createUser(username, passwordHash) {
-  return statements.createUser.get(username, passwordHash);
+  const isAdmin = statements.countUsers.get().count === 0 ? 1 : 0;
+  const settings = JSON.stringify({
+    theme: 'light',
+    fontSize: 'md',
+    readerLanguage: 'bilingual',
+  });
+  return mapUser(statements.createUser.get(username, passwordHash, isAdmin, settings));
 }
 
 export function findUserByUsername(username) {
-  return statements.findUserByUsername.get(username);
+  return mapUser(statements.findUserByUsername.get(username));
+}
+
+export function findUserById(userId) {
+  return mapUser(statements.findUserById.get(userId));
+}
+
+export function listUsers() {
+  return statements.listUsers.all().map((row) => ({
+    id: row.id,
+    username: row.username,
+    isAdmin: Boolean(row.is_admin),
+    created_at: row.created_at,
+  }));
+}
+
+export function updateUserSettings(userId, partialSettings) {
+  const current = findUserById(userId);
+  if (!current) return null;
+  const nextSettings = {
+    theme: partialSettings.theme ?? current.settings.theme ?? 'light',
+    fontSize: partialSettings.fontSize ?? current.settings.fontSize ?? 'md',
+    readerLanguage: partialSettings.readerLanguage ?? current.settings.readerLanguage ?? 'bilingual',
+  };
+  return mapUser(statements.updateUserSettings.get(JSON.stringify(nextSettings), userId));
+}
+
+export function updateUserAdmin(userId, isAdmin) {
+  const row = statements.updateUserAdmin.get(isAdmin ? 1 : 0, userId);
+  if (!row) return null;
+  return {
+    id: row.id,
+    username: row.username,
+    isAdmin: Boolean(row.is_admin),
+    created_at: row.created_at,
+  };
+}
+
+export function removeUser(userId) {
+  statements.deleteUser.run(userId);
 }
 
 export function listNotes(userId, ref) {

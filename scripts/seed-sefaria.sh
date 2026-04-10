@@ -1,43 +1,57 @@
 #!/usr/bin/env bash
-# seed-sefaria.sh – Download Sefaria-Export and index into the app's local search DB
+# seed-sefaria.sh – Copy vendored Sefaria texts from this repo into the app's local data volume
 # Usage: ./scripts/seed-sefaria.sh
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Docker Compose prefixes volume names with the project name.
 # The compose files default to `613-home`; override COMPOSE_PROJECT_NAME if your stack uses a different name.
 COMPOSE_PROJECT="${COMPOSE_PROJECT_NAME:-613-home}"
 VOLUME_NAME="${COMPOSE_PROJECT}_app_data"
-SEFARIA_EXPORT_URL="https://github.com/Sefaria-Project/Sefaria-Export/archive/refs/heads/master.zip"
+SEFARIA_REPO_SOURCE="${SEFARIA_REPO_SOURCE:-${REPO_ROOT}/vendor/sefaria/texts}"
 
 echo "==> Sefaria data seeder"
 echo "    Docker volume: $VOLUME_NAME"
 echo "    App endpoint : ${SEFARIA_SERVICE:-http://localhost:8613/api/sefaria}"
+echo "    Repo source  : ${SEFARIA_REPO_SOURCE}"
 
-echo "==> Downloading and extracting into Docker volume (this may take a while – ~2 GB)..."
+if [[ ! -d "${SEFARIA_REPO_SOURCE}" ]]; then
+  echo "ERROR: No vendored Sefaria source found at ${SEFARIA_REPO_SOURCE}"
+  echo "       Add the Sefaria export under vendor/sefaria/texts before running this script."
+  exit 1
+fi
+
+echo "==> Copying vendored texts into Docker volume..."
 docker run --rm \
+  -v "${SEFARIA_REPO_SOURCE}:/seed:ro" \
   -v "${VOLUME_NAME}:/data" \
   alpine sh -c "
     mkdir -p /data/sefaria
     if [ -f /data/sefaria/.downloaded ]; then
-      echo 'Sefaria data already present, skipping download.'
+      echo 'Sefaria data already present, skipping copy.'
       exit 0
     fi
-    apk add --quiet --no-cache curl unzip
-    echo 'Downloading Sefaria-Export...'
-    curl -L --progress-bar '${SEFARIA_EXPORT_URL}' -o /tmp/sefaria.zip
-    echo 'Extracting...'
-    unzip -q /tmp/sefaria.zip -d /data/sefaria
-    mv /data/sefaria/Sefaria-Export-master /data/sefaria/texts 2>/dev/null || true
-    rm /tmp/sefaria.zip
+    rm -rf /data/sefaria/texts
+    mkdir -p /data/sefaria/texts
+    cp -R /seed/. /data/sefaria/texts/
     touch /data/sefaria/.downloaded
-    echo 'Download complete.'
+    echo 'Copy complete.'
   "
 
-# Call the app index endpoint if it is running
 SEFARIA_SERVICE="${SEFARIA_SERVICE:-http://localhost:8613/api/sefaria}"
-echo "==> Triggering indexing via app..."
-curl -s -X POST "$SEFARIA_SERVICE/admin/reindex" \
-  -H "Content-Type: application/json" \
-  -d "{}" \
-  && echo "==> Indexing started (runs in background)." \
-  || echo "WARN: Could not reach the app – run indexing manually via POST /api/sefaria/admin/reindex"
+
+if [[ -n "${SEFARIA_ADMIN_TOKEN:-}" ]]; then
+  echo "==> Triggering indexing via app with provided admin token..."
+  curl -s -X POST "$SEFARIA_SERVICE/admin/reindex" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer ${SEFARIA_ADMIN_TOKEN}" \
+    -d "{}" \
+    && echo "==> Indexing started (runs in background)." \
+    || echo "WARN: Could not reach the app – sign in as an admin and use Reimport in Settings."
+else
+  echo "==> Data copied into the app volume."
+  echo "    Sign in as an admin and use Reimport in Settings to rebuild the local search index."
+  echo "    Or rerun this script with SEFARIA_ADMIN_TOKEN set to trigger indexing automatically."
+fi

@@ -13,6 +13,7 @@ services:
       - PORT=8613
       - APP_DATA_DIR=/data
       - SEFARIA_DATA_DIR=/data/sefaria
+      - SEFARIA_SOURCE_DIR=/app/vendor/sefaria
       - JWT_SECRET=${JWT_SECRET:-change_me_jwt_secret_in_production}
     volumes:
       - app_data:/data

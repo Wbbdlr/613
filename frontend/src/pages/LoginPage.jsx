@@ -55,6 +55,10 @@ export default function LoginPage({ onLogin }) {
           >Create Account</button>
         </div>
 
+        <p className={styles.hint}>
+          First time here? Choose <strong>Create Account</strong> to register your first user.
+        </p>
+
         <form onSubmit={submit} className={styles.form}>
           <label className={styles.label}>
             <span>Username</span>

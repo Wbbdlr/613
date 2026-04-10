@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { useDisplay } from '../contexts/DisplayContext.jsx';
 import styles from './SefariaPage.module.css';
 
 const API = '/api/sefaria';
@@ -63,6 +64,94 @@ export default function SefariaPage() {
   );
 }
 
+function EmptyLibraryState({ authFetch, isAdmin, onImported }) {
+  const [status, setStatus] = useState(null);
+  const [starting, setStarting] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const loadStatus = useCallback(async () => {
+    if (!isAdmin) return;
+    try {
+      const res = await authFetch(`${API}/admin/import/status`);
+      if (!res.ok) return;
+      setStatus(await res.json());
+    } catch {
+      // ignore
+    }
+  }, [authFetch, isAdmin]);
+
+  useEffect(() => {
+    loadStatus();
+  }, [loadStatus]);
+
+  useEffect(() => {
+    if (!status?.running) return undefined;
+    const timer = window.setInterval(loadStatus, 4000);
+    return () => window.clearInterval(timer);
+  }, [status?.running, loadStatus]);
+
+  const startImport = async (force = false) => {
+    setStarting(true);
+    setMessage('');
+    try {
+      const response = await authFetch(`${API}/admin/import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setMessage(data.error || 'Import could not be started.');
+        setStatus((current) => ({
+          ...(current || {}),
+          sourceReady: false,
+          sourcePath: data.sourcePath || current?.sourcePath,
+          error: data.error || current?.error,
+          phase: 'failed',
+        }));
+        return;
+      }
+      await loadStatus();
+      onImported?.();
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  return (
+    <div className={styles.emptyStateCard}>
+      <span className={styles.emptyIcon}>📂</span>
+      <p>
+        No books found.
+        {isAdmin ? ' Import the Sefaria library to enable browsing and search.' : ' Ask an admin to import the Sefaria library from Settings.'}
+      </p>
+      {status && (
+        <p className={styles.emptyMeta}>
+          Status: {status.phase || 'idle'}
+          {typeof status.indexed === 'number' ? ` · ${status.indexed} verses indexed` : ''}
+          {status.error ? ` · ${status.error}` : ''}
+        </p>
+      )}
+      {(message || status?.sourcePath) && (
+        <p className={styles.emptyMeta}>
+          {message || ''}
+          {status?.sourcePath ? `${message ? ' · ' : ''}Expected vendored path: ${status.sourcePath}` : ''}
+        </p>
+      )}
+      {isAdmin && (
+        <div className={styles.emptyActions}>
+          <button className={styles.btn} onClick={() => startImport(false)} disabled={starting || status?.running}>
+            {starting || status?.running ? 'Importing…' : 'Import Library'}
+          </button>
+          <button className={styles.btnSecondary} onClick={() => startImport(true)} disabled={starting || status?.running}>
+            Reimport
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ---- Search ---- */
 function SearchPanel({ onOpen, authFetch }) {
   const [q, setQ] = useState('');
@@ -119,17 +208,23 @@ function SearchPanel({ onOpen, authFetch }) {
 
 /* ---- Browse ---- */
 function BrowsePanel({ onOpen, authFetch }) {
+  const { user } = useAuth();
   const [books, setBooks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
   const [bookMeta, setBookMeta] = useState(null);
   const [booksLoading, setBooksLoading] = useState(true);
 
-  useEffect(() => {
+  const loadBooks = useCallback(() => {
+    setBooksLoading(true);
     authFetch(`${API}/texts/books`)
       .then(r => r.json())
       .then(d => setBooks(d.books || []))
       .finally(() => setBooksLoading(false));
   }, [authFetch]);
+
+  useEffect(() => {
+    loadBooks();
+  }, [loadBooks]);
 
   const selectBook = async (book) => {
     setSelectedBook(book);
@@ -144,10 +239,7 @@ function BrowsePanel({ onOpen, authFetch }) {
         <div className={styles.bookListHeader}>Books</div>
         {booksLoading && <div className={styles.loadingRow}><Spinner /></div>}
         {!booksLoading && books.length === 0 && (
-          <div className={styles.emptyState}>
-            <span className={styles.emptyIcon}>📂</span>
-            <p>No books found.<br />Run <code>seed-sefaria.sh</code> to import data.</p>
-          </div>
+          <EmptyLibraryState authFetch={authFetch} isAdmin={Boolean(user?.isAdmin)} onImported={loadBooks} />
         )}
         {books.map(b => (
           <div
@@ -189,6 +281,7 @@ function BrowsePanel({ onOpen, authFetch }) {
 
 /* ---- Read ---- */
 function ReadPanel({ ref_, authFetch }) {
+  const { readerLanguage } = useDisplay();
   const [data, setData] = useState(null);
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState('');
@@ -260,8 +353,8 @@ function ReadPanel({ ref_, authFetch }) {
             >
               <span className={styles.verseNum}>{i + 1}</span>
               <div className={styles.verseContent}>
-                <div className={styles.enText}>{verse}</div>
-                {data.he[i] && <div className={styles.heTextVerse} dir="rtl">{data.he[i]}</div>}
+                {readerLanguage !== 'hebrew' && <div className={styles.enText}>{verse}</div>}
+                {readerLanguage !== 'english' && data.he[i] && <div className={styles.heTextVerse} dir="rtl">{data.he[i]}</div>}
               </div>
             </div>
           );

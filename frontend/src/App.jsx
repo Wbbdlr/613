@@ -3,8 +3,10 @@ import { Routes, Route, NavLink } from 'react-router-dom';
 import HebcalPage from './pages/HebcalPage.jsx';
 import SefariaPage from './pages/SefariaPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
+import SettingsPage from './pages/SettingsPage.jsx';
 import DisplaySettings from './components/DisplaySettings.jsx';
 import { useAuth } from './contexts/AuthContext.jsx';
+import { useDisplay } from './contexts/DisplayContext.jsx';
 import styles from './App.module.css';
 
 function useOnlineStatus() {
@@ -22,6 +24,14 @@ function useOnlineStatus() {
 export default function App() {
   const isOnline = useOnlineStatus();
   const { user, login, logout } = useAuth();
+  const { setTheme, setFontSize, setReaderLanguage } = useDisplay();
+
+  useEffect(() => {
+    if (!user?.settings) return;
+    if (user.settings.theme) setTheme(user.settings.theme);
+    if (user.settings.fontSize) setFontSize(user.settings.fontSize);
+    if (user.settings.readerLanguage) setReaderLanguage(user.settings.readerLanguage);
+  }, [user?.settings, setTheme, setFontSize, setReaderLanguage]);
 
   if (!user) {
     return <LoginPage onLogin={login} />;
@@ -48,6 +58,9 @@ export default function App() {
             <NavLink to="/sefaria" className={({ isActive }) => isActive ? `${styles.navLink} ${styles.active}` : styles.navLink}>
               <span className={styles.navIcon}>📖</span> Seforim
             </NavLink>
+            <NavLink to="/settings" className={({ isActive }) => isActive ? `${styles.navLink} ${styles.active}` : styles.navLink}>
+              <span className={styles.navIcon}>⚙️</span> Settings
+            </NavLink>
           </nav>
           <div className={styles.headerActions}>
             <DisplaySettings />
@@ -66,6 +79,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HebcalPage />} />
           <Route path="/sefaria/*" element={<SefariaPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </main>
       <footer className={styles.footer}>
