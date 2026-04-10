@@ -40,6 +40,16 @@ docker compose -f docker-compose.repo-build.yml up -d --build
 
 This builds `frontend`, `hebcal-service`, and `sefaria-service` locally on the target host. It is suitable for Dockge repo-backed stacks, but not for a pasted single-file stack because the build contexts must exist on disk.
 
+### Optional: Remote-Build Single File
+
+If your Docker / Dockge environment supports Git build contexts, you can use [docker-compose.remote-build.yml](/workspaces/613/docker-compose.remote-build.yml) as a single-file deployment that builds directly from GitHub without pre-cloning the repo and without pulling app images from GHCR.
+
+```bash
+docker compose -f docker-compose.remote-build.yml up -d --build
+```
+
+Set `GIT_REF` if you want to pin a tag or branch, for example `GIT_REF=v1.0.1`. This mode is slower than registry-backed deploys and depends on Compose/BuildKit support for remote Git contexts.
+
 ### Using with Dockge
 
 [Dockge](https://github.com/louislam/dockge) can deploy this stack directly from a single pasted compose file. The production stack no longer depends on external config files; it writes the Caddy config and Postgres init SQL inside the containers at startup.
@@ -52,6 +62,7 @@ For public Dockge deployments, the GHCR packages must be publicly readable. Afte
 4. Click **Deploy**.
 
 If your Dockge stack is repo-backed instead of pasted YAML, you can use [docker-compose.repo-build.yml](/workspaces/613/docker-compose.repo-build.yml) instead and skip GHCR entirely.
+If your Dockge environment supports remote Git build contexts, you can also use [docker-compose.remote-build.yml](/workspaces/613/docker-compose.remote-build.yml) as a single pasted file and set `GIT_REF` to the version you want to build.
 
 > **Optional local-source builds:** if you want to build from source, clone the full repo and run `docker compose up --build` from that repo root (the override file is auto-applied there).
 
