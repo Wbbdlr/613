@@ -102,7 +102,7 @@ docker compose up --build
 ```
 
 Source code is bind-mounted in dev mode via `docker-compose.override.yml`.
-The override intentionally switches the frontend image target to `dev` (hot reload), while production uses the prebuilt `runner` image from GHCR.
+For local development, the override switches the frontend target to `dev` (hot reload). Production-style deployments (including Dockge config-only stacks) use the prebuilt GHCR images by default.
 
 ## License & Data
 
