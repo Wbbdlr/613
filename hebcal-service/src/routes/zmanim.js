@@ -1,27 +1,12 @@
 import { Router } from 'express';
-import { HDate, Zmanim } from '@hebcal/core';
-import { GeoDb } from '@hebcal/geo-sqlite';
-import { SunCalc } from '@hebcal/noaa';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { HDate, Zmanim, GeoLocation, Location } from '@hebcal/core';
 
 export const router = Router();
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-let geodb;
-try {
-  // geo-sqlite ships its own db inside the package
-  geodb = new GeoDb(
-    path.join(__dirname, '../../node_modules/@hebcal/geo-sqlite/geo.sqlite')
-  );
-} catch (e) {
-  console.warn('GeoDb not available:', e.message);
-}
-
 function buildZmanim(lat, lon, tzid, date) {
   const hdate = new HDate(date);
-  const zmanim = new Zmanim(new SunCalc(date, lat, lon), hdate, false);
+  const gloc = new GeoLocation('', lat, lon, 0, tzid);
+  const zmanim = new Zmanim(gloc, hdate, false);
   const fmt = (d) => (d ? d.toISOString() : null);
   return {
     date: date.toISOString().slice(0, 10),
@@ -57,19 +42,11 @@ router.get('/', (req, res) => {
     return res.json(buildZmanim(lat, lon, tzid, date));
   }
 
-  if (req.query.city && geodb) {
-    const city = geodb.lookupCityName(req.query.city);
+  if (req.query.city) {
+    const city = Location.lookup(req.query.city);
     if (!city) return res.status(404).json({ error: 'City not found' });
-    return res.json(buildZmanim(city.latitude, city.longitude, city.tzid, date));
+    return res.json(buildZmanim(city.latitude, city.longitude, city.timeZoneId, date));
   }
 
   res.status(400).json({ error: 'Provide lat+lon or city parameter' });
-});
-
-// GET /zmanim/cities?q=new+york
-router.get('/cities', (req, res) => {
-  if (!geodb) return res.status(503).json({ error: 'GeoDb not available' });
-  const q = (req.query.q || '').toLowerCase();
-  const results = geodb.lookupCityPrefix(q, 10);
-  res.json(results);
 });

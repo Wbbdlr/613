@@ -15,7 +15,6 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 app.use('/texts', textRouter);
 app.use('/search', searchRouter);
 app.use('/notes', notesRouter);
-app.use('/highlights', notesRouter);
 app.use('/admin', adminRouter);
 
 app.listen(PORT, () => {
