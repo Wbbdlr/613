@@ -34,6 +34,8 @@ By default it pulls the `stable` image channel; set `IMAGE_TAG` in `.env` if you
 
 [Dockge](https://github.com/louislam/dockge) can deploy this stack directly from a single pasted compose file. The production stack no longer depends on external config files; it writes the Caddy config and Postgres init SQL inside the containers at startup.
 
+For public Dockge deployments, the GHCR packages must be publicly readable. After the first publish, set each package to **Public** in GitHub Packages if they are not already public: `613-frontend`, `613-hebcal-service`, and `613-sefaria-service`.
+
 1. In Dockge, paste [docker-compose.yml](/workspaces/613/docker-compose.yml) as the stack definition.
 2. Add an `.env` only if you want to override defaults, especially `MEILI_MASTER_KEY`, `JWT_SECRET`, or `IMAGE_TAG`.
 3. Point your external tunnel or reverse proxy at the published host port, default `8613`.
