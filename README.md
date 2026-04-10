@@ -37,7 +37,7 @@ The UI will be available at **http://localhost** (or whatever `HTTP_PORT` you se
 2. Add an `.env` for the stack (copy values from `.env.example`).
 3. Click **Deploy**.
 
-> **Optional local-source builds:** if you want to build services from source instead of pulling GHCR images, clone the full repo and run with `docker-compose.override.yml`.
+> **Optional local-source builds:** if you want to build from source, clone the full repo and run `docker compose up --build` from that repo root (the override file is auto-applied there).
 
 ### 3. Seed Sefaria data (one-time, ~2 GB download)
 
