@@ -38,7 +38,7 @@ export async function indexAllTexts() {
       const verses = Array.isArray(data) ? data : (data?.text || []);
       const heVerses = heData ? (Array.isArray(heData) ? heData : (heData?.text || [])) : [];
 
-      verses.forEach((verse, i) => {
+      for (const [i, verse] of verses.entries()) {
         const verseNum = i + 1;
         const ref = `${book} ${chapter}:${verseNum}`;
         batch.push({
@@ -56,7 +56,7 @@ export async function indexAllTexts() {
           total += batch.length;
           batch = [];
         }
-      });
+      }
     } catch (err) {
       console.warn(`Failed to process ${enFile}:`, err.message);
     }

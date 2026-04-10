@@ -18,13 +18,31 @@ function sanitizeChapter(chapter) {
   return n;
 }
 
+// Find the directory for a named book anywhere under DATA_DIR.
+// Sefaria-Export organises books in category subdirectories, e.g.
+//   DATA_DIR/Tanakh/Genesis/English/  or  DATA_DIR/Mishnah/Mishnah_Berachot/English/
+// so we can't assume the book lives directly under DATA_DIR.
+async function findBookDir(safeName) {
+  const base = path.resolve(DATA_DIR);
+  const pattern = path.join(DATA_DIR, '**', safeName, 'English').replace(/\\/g, '/');
+  const matches = await glob(pattern, { onlyDirectories: true });
+  if (matches.length === 0) return null;
+  // The book directory is the parent of the 'English' directory
+  const bookDir = path.dirname(matches[0]);
+  const resolved = path.resolve(bookDir);
+  // Safety check: must stay within DATA_DIR
+  if (!resolved.startsWith(base + path.sep) && resolved !== base) return null;
+  return bookDir;
+}
+
 // Returns list of book names based on available JSON files
 export async function listBooks() {
   const pattern = path.join(DATA_DIR, '**', 'English', '*.json').replace(/\\/g, '/');
   const files = await glob(pattern);
   const books = files.map(f => {
     const parts = f.split(path.sep);
-    // Take the parent directory name as book name (structure: DATA_DIR/<book>/English/<chapter>.json)
+    // Take the grandparent directory name as book name
+    // structure: .../English/<chapter>.json  → parts[-3] is the book dir name
     return parts[parts.length - 3] || path.basename(f, '.json');
   });
   return [...new Set(books)].sort();
@@ -33,15 +51,8 @@ export async function listBooks() {
 // Returns basic metadata for a book
 export async function getBook(bookName) {
   const safeName = sanitizeName(bookName);
-  const bookDir = path.join(DATA_DIR, safeName);
-  // Ensure resolved path stays within DATA_DIR
-  const resolved = path.resolve(bookDir);
-  if (!resolved.startsWith(path.resolve(DATA_DIR) + path.sep)) return null;
-  try {
-    await fs.access(bookDir);
-  } catch {
-    return null;
-  }
+  const bookDir = await findBookDir(safeName);
+  if (!bookDir) return null;
   // Try to find chapter count from English directory
   const enDir = path.join(bookDir, 'English');
   let chapters = 0;
@@ -60,10 +71,13 @@ export async function readTextFile(bookName, chapter) {
   const safeChapter = sanitizeChapter(chapter);
   const chapterStr = String(safeChapter);
 
-  // Ensure resolved paths stay within DATA_DIR
+  const bookDir = await findBookDir(safeName);
+  if (!bookDir) return null;
+
   const base = path.resolve(DATA_DIR);
-  const enPath = path.join(DATA_DIR, safeName, 'English', `${chapterStr}.json`);
-  const hePath = path.join(DATA_DIR, safeName, 'Hebrew', `${chapterStr}.json`);
+  const enPath = path.join(bookDir, 'English', `${chapterStr}.json`);
+  const hePath = path.join(bookDir, 'Hebrew', `${chapterStr}.json`);
+  // Ensure resolved paths stay within DATA_DIR
   if (!path.resolve(enPath).startsWith(base + path.sep) ||
       !path.resolve(hePath).startsWith(base + path.sep)) {
     throw new Error('Path traversal detected');

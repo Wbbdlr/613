@@ -1,0 +1,38 @@
+/* ── Global print styles ─────────────────────────────────────────────────────
+   Applied when the user prints or saves as PDF via window.print().
+   These complement the @media print rules inside each CSS module.
+────────────────────────────────────────────────────────────────────────────── */
+@media print {
+  /* Hide app chrome */
+  header, nav, footer { display: none !important; }
+
+  /* Hide offline banner if visible */
+  [data-noprint] { display: none !important; }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt;
+    font-family: 'Times New Roman', serif;
+  }
+
+  /* Tables */
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #555; padding: 4px 8px; text-align: left; }
+  th { background: #eee !important; font-weight: bold; }
+  tr:nth-child(even) td { background: #f9f9f9 !important; }
+
+  /* Cards */
+  [class*="card"] {
+    border: 1px solid #555;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  /* Hebrew text */
+  [dir="rtl"] { font-family: 'Times New Roman', 'Frank Ruhl Libre', serif; }
+
+  /* Page breaks */
+  tr { page-break-inside: avoid; }
+  thead { display: table-header-group; }
+}

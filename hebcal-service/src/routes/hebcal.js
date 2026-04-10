@@ -27,10 +27,8 @@ router.get('/events', (req, res) => {
     year,
     month,
     isHebrewYear: false,
-    candlelighting: true,
     il,
-    mask: flags.HOLIDAYS | flags.MINOR_FAST | flags.ROSH_CHODESH |
-          flags.PARSHA_HASHAVUA | flags.LIGHT_CANDLES | flags.YOM_TOV_ENDS,
+    mask: flags.HOLIDAYS | flags.MINOR_FAST | flags.ROSH_CHODESH | flags.PARSHA_HASHAVUA,
   };
 
   const events = HebrewCalendar.calendar(options).map(ev => ({
@@ -39,7 +37,6 @@ router.get('/events', (req, res) => {
     title: ev.render('en'),
     titleHe: ev.render('he'),
     category: ev.getCategories()[0] || '',
-    url: ev.url ? ev.url() : null,
   }));
 
   res.json({ year, month, il, events });

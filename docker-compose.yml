@@ -13,7 +13,6 @@ services:
       - caddy_config:/config
     depends_on:
       - frontend
-      - hebcal-service
       - sefaria-service
 
   frontend:
@@ -25,16 +24,6 @@ services:
       - NODE_ENV=production
     expose:
       - "3000"
-
-  hebcal-service:
-    build:
-      context: ./hebcal-service
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - PORT=3001
-    expose:
-      - "3001"
 
   sefaria-service:
     build:
@@ -48,7 +37,7 @@ services:
       - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterKey}
       - SEFARIA_DATA_DIR=/data/sefaria
     volumes:
-      - sefaria_data:/data/sefaria
+      - ./sefaria-data:/data/sefaria
     expose:
       - "3002"
     depends_on:
@@ -91,4 +80,3 @@ volumes:
   caddy_config:
   postgres_data:
   meili_data:
-  sefaria_data:

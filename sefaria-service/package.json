@@ -6,14 +6,19 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch src/index.js",
+    "test": "node --test --test-timeout=120000 tests/notes.test.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
     "cors": "^2.8.5",
+    "express": "^4.19.2",
     "express-rate-limit": "^7.3.1",
-    "pg": "^8.11.5",
+    "glob": "^10.3.10",
     "meilisearch": "^0.39.0",
-    "glob": "^10.3.10"
+    "pg": "^8.11.5"
+  },
+  "devDependencies": {
+    "@testcontainers/postgresql": "^11.14.0",
+    "testcontainers": "^11.14.0"
   }
 }

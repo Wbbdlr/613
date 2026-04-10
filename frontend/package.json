@@ -8,12 +8,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/frank-ruhl-libre": "^5.2.8",
+    "@fontsource/inter": "^5.2.8",
+    "@hebcal/core": "^6.1.0",
+    "@hebcal/learning": "^6.8.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.23.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.0",
-    "vite": "^5.3.1"
+    "vite": "^5.3.1",
+    "vite-plugin-pwa": "^1.2.0"
   }
 }
