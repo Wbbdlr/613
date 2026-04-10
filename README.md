@@ -23,6 +23,7 @@ cp .env.example .env
 ### 2. Start the stack
 
 ```bash
+docker compose pull
 docker compose up -d
 ```
 
