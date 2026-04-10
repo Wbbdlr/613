@@ -2,7 +2,9 @@ name: 613-home
 
 services:
   app:
-    image: ghcr.io/wbbdlr/613-app:${IMAGE_TAG:-stable}
+    build:
+      context: .
+      dockerfile: app/Dockerfile
     restart: unless-stopped
     ports:
       - "${HTTP_PORT:-8613}:8613"

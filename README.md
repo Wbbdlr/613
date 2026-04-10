@@ -18,23 +18,25 @@ git clone https://github.com/Wbbdlr/613.git
 cd 613
 ```
 
-No `.env` file is required. All essential defaults are inline in the compose files. If you want to override settings like `HTTP_PORT`, `IMAGE_TAG`, or `JWT_SECRET`, copy [.env.example](/workspaces/613/.env.example) to `.env` and edit it.
+No `.env` file is required. All essential defaults are inline in the compose files. If you want to override settings like `HTTP_PORT` or `JWT_SECRET`, copy [.env.example](/workspaces/613/.env.example) to `.env` and edit it.
 
 ### 2. Start the stack
 
 ```bash
-docker compose pull
-docker compose up -d
+docker compose up -d --build
 ```
 
 The stack publishes the app on **http://SERVER_IP:8613** by default, or whatever `HTTP_PORT` you set in `.env`. You can expose that port directly or point Cloudflared, Caddy, Nginx Proxy Manager, or another reverse proxy at it.
-By default it pulls the `stable` image channel; set `IMAGE_TAG` in `.env` if you want to pin a different published tag such as a versioned release tag.
 The compose files default the project name to `613-home`, but Dockge may still show container and volume names based on the stack name you choose in its UI.
 The production deployment now runs as a single `app` container with one persistent data volume.
 
-### Optional: Repo-Build Deployment
+### Default Deployment Model
 
-If you want to avoid any container registry dependency, deploy from a checked-out repo and use [docker-compose.repo-build.yml](/workspaces/613/docker-compose.repo-build.yml):
+The default model is local repo build. Clone the repo onto the server or let Dockge deploy it as a repo-backed stack, then use [docker-compose.yml](/workspaces/613/docker-compose.yml). This avoids any GHCR dependency.
+
+### Optional: Explicit Repo-Build File
+
+If you prefer a separate compose file that makes the same repo-build intent explicit, you can use [docker-compose.repo-build.yml](/workspaces/613/docker-compose.repo-build.yml):
 
 ```bash
 docker compose -f docker-compose.repo-build.yml up -d --build
@@ -44,7 +46,7 @@ This builds the unified `app` image locally on the target host. It is suitable f
 
 ### Optional: Remote-Build Single File
 
-If your Docker / Dockge environment supports Git build contexts, you can use [docker-compose.remote-build.yml](/workspaces/613/docker-compose.remote-build.yml) as a single-file deployment that builds directly from GitHub without pre-cloning the repo and without pulling app images from GHCR.
+If your Docker / Dockge environment supports Git build contexts, you can use [docker-compose.remote-build.yml](/workspaces/613/docker-compose.remote-build.yml) as a single-file deployment that builds directly from GitHub without pre-cloning the repo.
 
 ```bash
 docker compose -f docker-compose.remote-build.yml up -d --build
@@ -54,19 +56,19 @@ Set `GIT_REF` if you want to pin a tag or branch, for example `GIT_REF=v1.0.1`. 
 
 ### Using with Dockge
 
-[Dockge](https://github.com/louislam/dockge) can deploy this stack directly from a single pasted compose file.
+[Dockge](https://github.com/louislam/dockge) works best here as a repo-backed stack, not pasted YAML.
 
-For public Dockge deployments, the GHCR package must be publicly readable. After the first publish, set `613-app` to **Public** in GitHub Packages if it is not already public.
+The recommended path is:
 
-1. In Dockge, paste [docker-compose.yml](/workspaces/613/docker-compose.yml) as the stack definition.
-2. Add an `.env` only if you want to override defaults, especially `JWT_SECRET`, `HTTP_PORT`, or `IMAGE_TAG`.
-3. Point your external tunnel or reverse proxy at the published host port, default `8613`.
-4. Click **Deploy**.
+1. Point Dockge at this Git repository.
+2. Use [docker-compose.yml](/workspaces/613/docker-compose.yml) as the compose file.
+3. Deploy with build enabled.
 
-If your Dockge stack is repo-backed instead of pasted YAML, you can use [docker-compose.repo-build.yml](/workspaces/613/docker-compose.repo-build.yml) instead and skip GHCR entirely.
-If your Dockge environment supports remote Git build contexts, you can also use [docker-compose.remote-build.yml](/workspaces/613/docker-compose.remote-build.yml) as a single pasted file and set `GIT_REF` to the version you want to build.
+Add an `.env` only if you want to override defaults, especially `JWT_SECRET` or `HTTP_PORT`.
 
-> **Optional local-source builds:** if you want to build from source, clone the full repo and run `docker compose up --build` from that repo root (the override file is auto-applied there).
+If your Dockge environment only supports pasted YAML and not a repo-backed build, use [docker-compose.remote-build.yml](/workspaces/613/docker-compose.remote-build.yml) instead and set `GIT_REF` if you want to pin a branch or tag.
+
+> The GHCR publish workflow is optional now. It is no longer required for normal self-hosted deployment.
 
 ### 3. Seed Sefaria data (one-time, ~2 GB download)
 
@@ -129,7 +131,7 @@ docker compose up --build
 Source code is bind-mounted in dev mode via `docker-compose.override.yml`.
 For local development, the override builds the unified app image from local source and keeps the app data in a Docker volume.
 Production-style deployments, including Dockge repo-backed stacks, use either the unified `613-app` image or local repo builds.
-Production-style deployments from a single Dockge compose file work by pulling the published `613-app` image.
+Production-style deployments now default to local repo builds. Remote Git builds remain available when you need a single-file deploy.
 
 ## License & Data
 
